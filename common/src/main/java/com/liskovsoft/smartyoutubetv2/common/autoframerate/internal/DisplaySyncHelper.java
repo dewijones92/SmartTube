@@ -511,7 +511,7 @@ public class DisplaySyncHelper implements UhdHelperListener {
         getUhdHelper().setPreferredDisplayModeId(
                 window,
                 modeTmp.getModeId(),
-                true);
+                FocusSpeed.allowAfrOverlay(mContext));
 
         if (mListener != null) {
             mListener.onModeStart(mOriginalMode);

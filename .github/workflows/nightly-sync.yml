@@ -182,7 +182,7 @@ jobs:
           fi
           RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           TITLE="Nightly sync could not push the upstream merge"
-          BODY="The build was published, but pushing the merge to ${GITHUB_REF_NAME} failed. Run: ${RUN_URL}"
+          BODY="The build was NOT published because the merge could not be pushed to ${GITHUB_REF_NAME} (e.g. master moved during the run). The next run retries. Run: ${RUN_URL}"
           EXISTING=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"${TITLE}\" in:title" --json number --jq '.[0].number // empty')
           if [ -n "$EXISTING" ]; then
             gh issue comment --repo "$GITHUB_REPOSITORY" "$EXISTING" --body "$BODY"
