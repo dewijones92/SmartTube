@@ -52,6 +52,9 @@ in the living room. Upstream SmartTube is merged in every night, so keep our foo
    Only then merge to `master` and publish. The TV is Dewi's to lend: switch it on with `KEYCODE_WAKEUP` when
    needed; afterwards sleep the stick and ask Dewi to switch the TV off with the remote (no adb route found:
    `KEYCODE_SLEEP`, `KEYCODE_TV_POWER` and CEC auto-off all failed to send a standby on 2026-10-31).
+   **Before the first playback: set the app's own player volume to 0%** (Settings › Player › Volume) and confirm it
+   by screenshot; restore it after the last playback. Forgotten once (2026-10-31, batch 3) and the TV played aloud.
+   **Before every OK that could start playback, check the focused tile's title by screenshot.**
    **Test with tennis videos, never kids' content** (Peppa, Ms Rachel, Moomoo rows): Dewi's son gets distracted
    (Dewi, 2026-10-31). Deep-link tennis video IDs; for Moomoo itself, check the rows render without playing.
 5. **Report** in the end-of-run shape: 🚧 Needs you, Changed, 🔍 Found, ⚠️ Couldn't confirm.
