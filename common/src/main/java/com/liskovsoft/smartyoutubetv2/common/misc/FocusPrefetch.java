@@ -24,7 +24,8 @@ final class FocusPrefetch {
             MediaGroup.TYPE_PLAYBACK_QUEUE,
             MediaGroup.TYPE_BLOCKED_CHANNELS,
             MediaGroup.TYPE_CHANNEL_UPLOADS,
-            MediaGroup.TYPE_USER_PLAYLISTS
+            MediaGroup.TYPE_USER_PLAYLISTS,
+            FocusSections.CONTINUE_ID
     };
     private static final Map<Integer, Entry<MediaGroup>> sGrids = new HashMap<>();
     private static final Map<Integer, Entry<List<MediaGroup>>> sRows = new HashMap<>();

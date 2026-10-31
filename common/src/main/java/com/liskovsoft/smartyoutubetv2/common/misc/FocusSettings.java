@@ -44,7 +44,7 @@ public final class FocusSettings {
         List<OptionItem> options = new ArrayList<>();
         int current = bedtimeMinutes(context);
 
-        for (int minutes : choices(context)) {
+        for (int minutes : BEDTIME_CHOICES) {
             String title = minutes == 0 ? "Off" : minutes + " minutes";
             options.add(UiOptionItem.from(title, option -> {
                 prefs(context).edit().putInt(KEY_BEDTIME_MINUTES, minutes).apply();
@@ -54,10 +54,6 @@ public final class FocusSettings {
 
         dialog.appendRadioCategory("Moomoo bedtime: stop after", options);
         dialog.showDialog("SmartTube Focus");
-    }
-
-    private static int[] choices(Context context) {
-        return BEDTIME_CHOICES;
     }
 
     private static SharedPreferences prefs(Context context) {

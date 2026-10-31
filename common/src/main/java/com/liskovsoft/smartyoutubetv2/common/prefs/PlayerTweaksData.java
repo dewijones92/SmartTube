@@ -276,7 +276,7 @@ public class PlayerTweaksData implements ProfileChangeListener {
     }
 
     public boolean isPlayerButtonEnabled(int menuItems) {
-        return (mPlayerButtons & menuItems) == menuItems;
+        return FocusMode.playerButtonEnabled(menuItems, (mPlayerButtons & menuItems) == menuItems);
     }
 
     public void setPlayerButtonEnabled(int playerButtons) {

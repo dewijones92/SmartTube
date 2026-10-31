@@ -10,12 +10,15 @@
 - **Tennis** (`FocusSections`, id 9002, after Moomoo, both modes): "Tennis TV · Latest" (channel
   `UCbcxFkd6B9xUU54InHv4Tig`, Latest chip) and "Carlos Alcaraz" (Tennis TV channel search "Alcaraz").
 - **Continue watching** (id 9003, after Tennis, sign-in only): History filtered to items 5–95% watched, one row.
+  Not cached (like History).
 - **Kids** (third prompt button): `FocusMode.sKids` overlay on top of focus mode: sidebar = Moomoo only, opens on
   Moomoo, search/account top buttons hidden (`MainUIData.isTopButtonEnabled` hook). Ends on the next launch (the
-  prompt resets it). The remote's search key is not blocked.
+  prompt resets it). The player's Search and Open-channel buttons are hidden too (`PlayerTweaksData` hook). Changing
+  Kids refreshes the sidebar and the top buttons. The remote's search key is not blocked.
 - **Bedtime** (`Moomoo.onTickle`, minute ticks): counts Moomoo playing time; at the limit shows "Last one! Bedtime
   after this episode 🌙", stops preloading, and the episode ends with PAUSE instead of rolling on. Resets after an
-  hour without Moomoo. Limit in Settings › SmartTube Focus (`FocusSettings`, prefs `focus_mode/bedtime_minutes`):
+  hour without Moomoo; lifted at once if the limit is raised or turned off. Time across a gap (another video in
+  between) is not counted. Limit in Settings › SmartTube Focus (`FocusSettings`, prefs `focus_mode/bedtime_minutes`):
   Off / 30 / 45 / 60 / 90, default 45.
 - **More Moomoo rows**: Bluey `UCVzLLZkDuFGAE2BGdBuBNBg`, Hey Duggee `UC574PCE8QOIoXsOGAyL3obQ`, CBeebies
   `UC0fXNmjDoC7ckPyT6qM8Urw`, Cocomelon `UCbCmjCuTUZos6Inko4u57UQ`. Row loading moved to `FocusRows`.

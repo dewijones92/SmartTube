@@ -13,6 +13,8 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerC
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.UiOptionItem;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.AppDialogPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.BrowsePresenter;
+import com.liskovsoft.smartyoutubetv2.common.prefs.MainUIData;
+import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerTweaksData;
 import com.liskovsoft.smartyoutubetv2.common.utils.IntentExtractor;
 import com.liskovsoft.youtubeapi.service.internal.MediaServiceData;
 
@@ -79,7 +81,7 @@ public final class FocusMode {
 
         Log.d(TAG, "dewidebug app launch: defaulting to focus mode and showing prompt");
         BrowsePresenter.instance(context);
-        sKids = false;
+        setKids(context, false);
         setActive(context, true, "default before prompt");
         FocusPrefetch.start(context);
 
@@ -95,9 +97,8 @@ public final class FocusMode {
             BrowsePresenter.instance(context).selectSection(MediaGroup.TYPE_HOME);
         }));
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_kids), option -> {
-            sKids = true;
             setActive(context, true, "user chose Kids");
-            BrowsePresenter.instance(context).updateSections();
+            setKids(context, true);
             dialog.closeDialog();
             BrowsePresenter.instance(context).selectSection(Moomoo.SECTION_ID);
         }));
@@ -146,6 +147,22 @@ public final class FocusMode {
 
     public static boolean topButtonEnabled(boolean storedValue) {
         return storedValue && !sKids;
+    }
+
+    public static boolean playerButtonEnabled(int button, boolean storedValue) {
+        boolean blockedForKids = (button & (PlayerTweaksData.PLAYER_BUTTON_SEARCH | PlayerTweaksData.PLAYER_BUTTON_OPEN_CHANNEL)) != 0;
+        return storedValue && !(sKids && blockedForKids);
+    }
+
+    private static void setKids(Context context, boolean kids) {
+        if (sKids == kids) {
+            return;
+        }
+
+        sKids = kids;
+        Log.d(TAG, "dewidebug kids=%s", kids);
+        BrowsePresenter.instance(context).updateSections();
+        MainUIData.instance(context).onDataChange();
     }
 
     public static int playbackMode(int storedMode) {

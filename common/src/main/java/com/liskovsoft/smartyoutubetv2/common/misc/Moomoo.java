@@ -129,14 +129,22 @@ public final class Moomoo {
             sBedtimeAnnounced = false;
         }
 
-        if (player.isPlaying() && sLastWatchTickMs > 0) {
-            sWatchedMs += Math.min(now - sLastWatchTickMs, MAX_TICK_GAP_MS);
+        long gapMs = now - sLastWatchTickMs;
+
+        if (player.isPlaying() && sLastWatchTickMs > 0 && gapMs <= MAX_TICK_GAP_MS) {
+            sWatchedMs += gapMs;
         }
 
         sLastWatchTickMs = now;
         int limitMinutes = FocusSettings.bedtimeMinutes(context);
+        boolean overLimit = limitMinutes > 0 && sWatchedMs >= limitMinutes * 60_000L;
 
-        if (limitMinutes > 0 && !sBedtimeAnnounced && sWatchedMs >= limitMinutes * 60_000L) {
+        if (!overLimit && sBedtimeAnnounced) {
+            Log.d(TAG, "dewidebug Moomoo bedtime lifted: limit now %s min, watched %s ms", limitMinutes, sWatchedMs);
+            sBedtimeAnnounced = false;
+        }
+
+        if (overLimit && !sBedtimeAnnounced) {
             sBedtimeAnnounced = true;
             Log.d(TAG, "dewidebug Moomoo bedtime reached: watched %s ms, limit %s min", sWatchedMs, limitMinutes);
             MessageHelpers.showLongMessage(context, "Last one! Bedtime after this episode \uD83C\uDF19");
