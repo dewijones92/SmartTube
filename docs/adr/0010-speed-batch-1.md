@@ -27,3 +27,10 @@ Picture follows after the AFR pause (now 3 s). Next target: mint the PO token du
   that failed (offline), or a client switch mid-load. A clicked-then-abandoned video is always fetched.
 - 4K switches may show the raw mode change instead of Amazon's overlay.
 - Upstream candidates: format-fetch-on-click and warm-engine (Yes), overlay skip (Maybe; device-specific).
+
+## Correction 2026-10-31 (A/B on the TV)
+Format-fetch-on-click on its own measured **no gain**: upstream `4b3f333e` vs the same change as a clean upstream PR,
+5 identical Tennis TV deep links each, decoder start median 2.46 s vs 2.58 s. The player engine starts ~0.2 s after
+the click on this device, so there is little to overlap. The batch-1 gains above came from the engine warm-up and
+the removed AFR overlay wait. `FocusSpeed.prefetchFormatInfo` stays: it is harmless and is reused by the launch
+prefetch (ADR 0011) and the Moomoo preload, where the fetch is genuinely ahead of time.

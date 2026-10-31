@@ -14,6 +14,8 @@ in the living room. Upstream SmartTube is merged in every night, so keep our foo
    already passed rule 6 in this fork, and its description says so plainly: device, build, what happy path was
    run, what was checked (screen, logcat, timings). If the upstream branch's code differs from the fork's
    (no flavour gate, different call), test the exact upstream build too, or say it wasn't (Dewi, 2026-10-31).
+   Measure the change **on its own** (A/B against upstream, same videos, 5 runs each) before claiming a number:
+   PR #6394 claimed a saving that came from other changes and measured as zero, so we closed it.
 3. **Record decisions as ADRs** in `docs/adr/` (next number, add to the README table, say who decided).
 4. **Touch upstream files minimally.** Put logic in `common/.../misc/` (our classes) and keep upstream edits to
    one-line hooks. Gate Focus-only behaviour on `R.bool.focus_mode_available`, which is true only in
