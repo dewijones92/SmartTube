@@ -76,17 +76,19 @@ public final class FocusMode {
     }
 
     public static List<Video> filterSections(List<Video> items) {
-        if (!sActive || items == null) {
-            return items;
+        if (items == null) {
+            return null;
         }
 
         List<Video> visible = new ArrayList<>();
 
         for (Video item : items) {
-            if (item == null || !isHiddenSection(item.sectionId)) {
+            if (item == null || !sActive || !isHiddenSection(item.sectionId)) {
                 visible.add(item);
             }
         }
+
+        Moomoo.insertAfterChannels(visible);
 
         return visible;
     }

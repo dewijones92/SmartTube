@@ -40,6 +40,7 @@ import com.liskovsoft.smartyoutubetv2.common.misc.AppDataSourceManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.BrowseProcessorManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager.AccountChangeListener;
+import com.liskovsoft.smartyoutubetv2.common.misc.Moomoo;
 import com.liskovsoft.smartyoutubetv2.common.prefs.AccountsData;
 import com.liskovsoft.smartyoutubetv2.common.prefs.BlockedChannelData;
 import com.liskovsoft.smartyoutubetv2.common.prefs.MainUIData;
@@ -180,6 +181,7 @@ public class BrowsePresenter extends BasePresenter<BrowseView> implements Sectio
 
         initSettingsGridMapping();
         initLocalGridMapping();
+        Moomoo.register(getContext(), mSectionsMapping, mRowMapping);
     }
 
     private void initSectionMapping() {
