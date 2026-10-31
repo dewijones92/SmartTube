@@ -87,13 +87,13 @@ jobs:
             echo
             echo "Run: ${RUN_URL}"
           } > issue-body.md
-          EXISTING=$(gh issue list --state open --search "\"${CONFLICT_TITLE}\" in:title" --json number --jq '.[0].number // empty')
+          EXISTING=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"${CONFLICT_TITLE}\" in:title" --json number --jq '.[0].number // empty')
           if [ -n "$EXISTING" ]; then
             echo "Commenting on existing issue #${EXISTING}"
-            gh issue comment "$EXISTING" --body-file issue-body.md
+            gh issue comment --repo "$GITHUB_REPOSITORY" "$EXISTING" --body-file issue-body.md
           else
             echo "Opening a new issue"
-            gh issue create --title "$CONFLICT_TITLE" --body-file issue-body.md
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$CONFLICT_TITLE" --body-file issue-body.md
           fi
           exit 1
 
@@ -115,13 +115,12 @@ jobs:
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          ALIAS: ${{ secrets.ALIAS }}
         run: |
           if [ -z "$SIGNING_KEY" ]; then echo "SIGNING_KEY secret missing"; exit 1; fi
           echo "$SIGNING_KEY" | base64 --decode > "$RUNNER_TEMP/key.jks"
           {
             echo "storePassword=$KEY_STORE_PASSWORD"
-            echo "keyAlias=$ALIAS"
+            echo "keyAlias=focus"
             echo "keyPassword=$KEY_PASSWORD"
             echo "storeFile=$RUNNER_TEMP/key.jks"
           } > keystore.properties
@@ -182,9 +181,9 @@ jobs:
           VERSION_NAME: ${{ steps.files.outputs.versionName }}
         run: |
           SHA=$(git rev-parse HEAD)
-          gh release create "focus-${VERSION_NAME}" release/* --target "$SHA" \
+          gh release create --repo "$GITHUB_REPOSITORY" "focus-${VERSION_NAME}" release/* --target "$SHA" \
             --title "SmartTube Focus ${VERSION_NAME}" --notes-file upstream-changes.txt
-          gh release delete latest --cleanup-tag --yes || echo "no previous latest release"
-          gh release create latest release/* --target "$SHA" --latest \
+          gh release delete --repo "$GITHUB_REPOSITORY" latest --cleanup-tag --yes || echo "no previous latest release"
+          gh release create --repo "$GITHUB_REPOSITORY" latest release/* --target "$SHA" --latest \
             --title "SmartTube Focus (latest: ${VERSION_NAME})" --notes-file upstream-changes.txt
           echo "Published ${VERSION_NAME} at ${SHA}"
