@@ -4,4 +4,5 @@
     <string name="focus_mode_title" translatable="false">Distraction-free mode?</string>
     <string name="focus_mode_yes" translatable="false">Yes, distraction-free</string>
     <string name="focus_mode_no" translatable="false">No, full SmartTube</string>
+    <string name="focus_mode_kids" translatable="false">Kids (Moomoo only)</string>
 </resources>

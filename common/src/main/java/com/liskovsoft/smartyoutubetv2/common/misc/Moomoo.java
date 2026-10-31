@@ -2,9 +2,8 @@ package com.liskovsoft.smartyoutubetv2.common.misc;
 
 import android.content.Context;
 
-import com.liskovsoft.mediaserviceinterfaces.ContentService;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
-import com.liskovsoft.mediaserviceinterfaces.data.MediaItem;
+import com.liskovsoft.sharedutils.helpers.MessageHelpers;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.sharedutils.rx.RxHelper;
 import com.liskovsoft.smartyoutubetv2.common.R;
@@ -13,7 +12,6 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.VideoGroup;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerConstants;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerEngine;
-import com.liskovsoft.youtubeapi.service.YouTubeServiceManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,12 +23,19 @@ public final class Moomoo {
     private static final String TAG = Moomoo.class.getSimpleName();
     public static final int SECTION_ID = 9001;
     private static final String TITLE = "Moomoo";
-    private static final String POPULAR = "Popular";
-    private static final int POPULAR_CHIP_INDEX = 1;
     private static final String[][] CHANNELS = {
             {"UCG2CL6EUjG8TVT1Tpl9nJdg", "Ms Rachel"},
-            {"UCAOtE1V7Ots4DjM8JLlrYgg", "Peppa Pig"}
+            {"UCAOtE1V7Ots4DjM8JLlrYgg", "Peppa Pig"},
+            {"UCVzLLZkDuFGAE2BGdBuBNBg", "Bluey"},
+            {"UC574PCE8QOIoXsOGAyL3obQ", "Hey Duggee"},
+            {"UC0fXNmjDoC7ckPyT6qM8Urw", "CBeebies"},
+            {"UCbCmjCuTUZos6Inko4u57UQ", "Cocomelon"}
     };
+    private static final long MAX_TICK_GAP_MS = 70_000;
+    private static final long BEDTIME_RESET_MS = 60 * 60 * 1_000;
+    private static long sWatchedMs;
+    private static long sLastWatchTickMs;
+    private static boolean sBedtimeAnnounced;
     private static final long PRELOAD_BEFORE_END_MS = 120_000;
     private static boolean sRegistered;
     private static String sPreloadedKey;
@@ -73,6 +78,10 @@ public final class Moomoo {
         visible.add(index, sSectionItem);
     }
 
+    public static boolean isRegistered() {
+        return sRegistered;
+    }
+
     public static boolean isMoomooVideo(Video video) {
         VideoGroup group = video != null ? video.getGroup() : null;
         return group != null && group.getSection() != null && group.getSection().getId() == SECTION_ID;
@@ -92,17 +101,50 @@ public final class Moomoo {
         VideoGroup group = video.getGroup();
         int index = group.indexOf(video);
         boolean hasNext = index >= 0 && index < group.getSize() - 1;
-        Log.d(TAG, "dewidebug Moomoo playback: index=%s size=%s hasNext=%s", index, group.getSize(), hasNext);
+        boolean bedtime = sBedtimeAnnounced;
+        Log.d(TAG, "dewidebug Moomoo playback: index=%s size=%s hasNext=%s bedtime=%s watched=%s ms", index, group.getSize(), hasNext, bedtime, sWatchedMs);
 
-        return hasNext ? PlayerConstants.PLAYBACK_MODE_ALL : PlayerConstants.PLAYBACK_MODE_PAUSE;
+        return hasNext && !bedtime ? PlayerConstants.PLAYBACK_MODE_ALL : PlayerConstants.PLAYBACK_MODE_PAUSE;
     }
 
     public interface NextVideo {
         Video get();
     }
 
-    public static void preloadNextIfNeeded(Context context, PlayerEngine player, Video video, NextVideo nextVideo) {
-        if (player == null || !isMoomooVideo(video) || !hasNextInRow(video) || !player.containsMedia()) {
+    public static void onTickle(Context context, PlayerEngine player, Video video, NextVideo nextVideo) {
+        if (player == null || !isMoomooVideo(video)) {
+            return;
+        }
+
+        countWatching(context, player);
+        preloadNextIfNeeded(context, player, video, nextVideo);
+    }
+
+    private static void countWatching(Context context, PlayerEngine player) {
+        long now = System.currentTimeMillis();
+
+        if (sLastWatchTickMs > 0 && now - sLastWatchTickMs > BEDTIME_RESET_MS) {
+            Log.d(TAG, "dewidebug Moomoo bedtime count reset after a break");
+            sWatchedMs = 0;
+            sBedtimeAnnounced = false;
+        }
+
+        if (player.isPlaying() && sLastWatchTickMs > 0) {
+            sWatchedMs += Math.min(now - sLastWatchTickMs, MAX_TICK_GAP_MS);
+        }
+
+        sLastWatchTickMs = now;
+        int limitMinutes = FocusSettings.bedtimeMinutes(context);
+
+        if (limitMinutes > 0 && !sBedtimeAnnounced && sWatchedMs >= limitMinutes * 60_000L) {
+            sBedtimeAnnounced = true;
+            Log.d(TAG, "dewidebug Moomoo bedtime reached: watched %s ms, limit %s min", sWatchedMs, limitMinutes);
+            MessageHelpers.showLongMessage(context, "Last one! Bedtime after this episode \uD83C\uDF19");
+        }
+    }
+
+    private static void preloadNextIfNeeded(Context context, PlayerEngine player, Video video, NextVideo nextVideo) {
+        if (sBedtimeAnnounced || !hasNextInRow(video) || !player.containsMedia()) {
             return;
         }
 
@@ -132,105 +174,12 @@ public final class Moomoo {
     }
 
     private static List<MediaGroup> loadRows() {
-        ContentService content = YouTubeServiceManager.instance().getContentService();
         List<MediaGroup> rows = new ArrayList<>();
 
         for (String[] channel : CHANNELS) {
-            MediaGroup popular = loadPopular(content, channel[0]);
-
-            if (popular != null && !popular.isEmpty()) {
-                rows.add(new TitledGroup(popular, channel[1] + " \u00B7 " + POPULAR));
-                Log.d(TAG, "dewidebug Moomoo row %s: %s videos", channel[1], popular.getMediaItems().size());
-            } else {
-                Log.e(TAG, "dewidebug Moomoo row %s: no popular videos (channel %s)", channel[1], channel[0]);
-            }
+            FocusRows.addChip(rows, channel[0], channel[1], FocusRows.POPULAR, 1);
         }
 
         return rows;
-    }
-
-    private static MediaGroup loadPopular(ContentService content, String channelId) {
-        try {
-            List<MediaGroup> chips = content.getChannelSortingOptionsObserve(channelId).blockingFirst();
-
-            if (chips == null || chips.isEmpty()) {
-                Log.e(TAG, "dewidebug Moomoo channel %s: no sort options", channelId);
-                return null;
-            }
-
-            MediaGroup chip = null;
-
-            for (MediaGroup option : chips) {
-                if (option != null && POPULAR.equalsIgnoreCase(option.getTitle())) {
-                    chip = option;
-                    break;
-                }
-            }
-
-            if (chip == null) {
-                chip = chips.size() > POPULAR_CHIP_INDEX ? chips.get(POPULAR_CHIP_INDEX) : chips.get(0);
-                Log.d(TAG, "dewidebug Moomoo channel %s: no chip titled Popular, using '%s'", channelId, chip != null ? chip.getTitle() : null);
-            }
-
-            return content.continueGroupObserve(chip).blockingFirst();
-        } catch (Exception e) {
-            Log.e(TAG, "dewidebug Moomoo channel %s failed: %s", channelId, e.getMessage());
-            return null;
-        }
-    }
-
-    private static final class TitledGroup implements MediaGroup {
-        private final MediaGroup mGroup;
-        private final String mTitle;
-
-        TitledGroup(MediaGroup group, String title) {
-            mGroup = group;
-            mTitle = title;
-        }
-
-        @Override
-        public int getType() {
-            return mGroup.getType();
-        }
-
-        @Override
-        public List<MediaItem> getMediaItems() {
-            return mGroup.getMediaItems();
-        }
-
-        @Override
-        public String getTitle() {
-            return mTitle;
-        }
-
-        @Override
-        public String getChannelId() {
-            return mGroup.getChannelId();
-        }
-
-        @Override
-        public String getParams() {
-            return mGroup.getParams();
-        }
-
-        @Override
-        public String getReloadPageKey() {
-            return null;
-        }
-
-        @Override
-        public String getNextPageKey() {
-            return null;
-        }
-
-        @Override
-        public String getChannelUrl() {
-            return mGroup.getChannelUrl();
-        }
-
-        @Override
-        public boolean isEmpty() {
-            return mGroup.isEmpty();
-        }
     }
 }

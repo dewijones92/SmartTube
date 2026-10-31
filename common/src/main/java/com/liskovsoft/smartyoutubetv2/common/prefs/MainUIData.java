@@ -8,6 +8,7 @@ import com.liskovsoft.sharedutils.helpers.Helpers;
 import com.liskovsoft.smartyoutubetv2.common.R;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.dialogs.menu.providers.ContextMenuManager;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.dialogs.menu.providers.ContextMenuProvider;
+import com.liskovsoft.smartyoutubetv2.common.misc.FocusMode;
 import com.liskovsoft.smartyoutubetv2.common.prefs.AppPrefs.ProfileChangeListener;
 import com.liskovsoft.smartyoutubetv2.common.prefs.common.DataChangeBase;
 import com.liskovsoft.smartyoutubetv2.common.utils.ClickbaitRemover;
@@ -327,7 +328,7 @@ public class MainUIData extends DataChangeBase implements ProfileChangeListener 
     }
 
     public boolean isTopButtonEnabled(int button) {
-        return (mTopButtons & button) == button;
+        return FocusMode.topButtonEnabled((mTopButtons & button) == button);
     }
 
     public void setTopButtonEnabled(int button) {

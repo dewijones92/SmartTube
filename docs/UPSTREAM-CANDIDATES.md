@@ -14,5 +14,7 @@ Verdicts: **Yes** (worth offering), **Maybe** (needs generalising first), **No**
 | Keep the AFR refresh rate on other screens after leaving the player (no switch back and forth between videos) | 0011 | **Issue opened: yuliskov/SmartTube#6395** (resubmits stale #198) | Draft on `pr/afr-keep-mode` (opt-in setting, ~110 lines) has 4 review findings to fix, and upstream reverted #6143 (writing `preferredDisplayModeId = 0`) on 2026-10-06 pending investigation. Ask the maintainer in an issue, with our TV measurements, before a PR. |
 | 60 s section cache instead of refetching on every sidebar focus | 0011 | **Maybe** | Big feel improvement; needs care with menu actions and a setting. |
 | Preload the next video's info near the end | 0011 | **Maybe** | Upstream has a dead `preloadNextVideoIfNeeded`; ours is scoped to Moomoo rows. Generalised, it'd be a clean PR. |
+| Kids mode / bedtime timer / Tennis section | 0012 | **No** | Built on our curated sections and launch prompt; upstream has Child mode. A generic "stop autoplay after N minutes" setting might be Maybe later. |
+| Continue watching (History filtered to part-watched) | 0012 | **Maybe** | Small and general; would need to be a normal section toggle upstream. |
 | Moomoo kids' section with fixed channels | 0008 | **No** | Hard-coded to our family's channels. A generic "pin a channel's Popular videos as a section" might be Maybe. |
 | Separate flavour, jade branding, nightly sync, own update URL | 0002, 0004–0006 | **No** | Fork plumbing. |

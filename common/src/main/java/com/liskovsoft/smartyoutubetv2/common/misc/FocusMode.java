@@ -40,6 +40,7 @@ public final class FocusMode {
             MediaGroup.TYPE_MOVIES
     };
     private static volatile boolean sActive;
+    private static volatile boolean sKids;
 
     private FocusMode() {
     }
@@ -53,6 +54,7 @@ public final class FocusMode {
         Moomoo.register(context, sections, rows);
 
         if (context != null && context.getResources().getBoolean(R.bool.focus_mode_available)) {
+            FocusSections.register(context, sections, rows);
             FocusPrefetch.wrap(grids, rows);
         }
     }
@@ -77,6 +79,7 @@ public final class FocusMode {
 
         Log.d(TAG, "dewidebug app launch: defaulting to focus mode and showing prompt");
         BrowsePresenter.instance(context);
+        sKids = false;
         setActive(context, true, "default before prompt");
         FocusPrefetch.start(context);
 
@@ -90,6 +93,13 @@ public final class FocusMode {
             setActive(context, false, "user chose No");
             dialog.closeDialog();
             BrowsePresenter.instance(context).selectSection(MediaGroup.TYPE_HOME);
+        }));
+        dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_kids), option -> {
+            sKids = true;
+            setActive(context, true, "user chose Kids");
+            BrowsePresenter.instance(context).updateSections();
+            dialog.closeDialog();
+            BrowsePresenter.instance(context).selectSection(Moomoo.SECTION_ID);
         }));
         dialog.showDialog(context.getString(R.string.focus_mode_title),
                 () -> Log.d(TAG, "dewidebug prompt closed: active=%s", sActive));
@@ -106,6 +116,11 @@ public final class FocusMode {
 
         List<Video> visible = new ArrayList<>();
 
+        if (sKids && Moomoo.isRegistered()) {
+            Moomoo.insertAfterChannels(visible);
+            return visible;
+        }
+
         for (Video item : items) {
             if (item == null || !sActive || !isHiddenSection(item.sectionId)) {
                 visible.add(item);
@@ -114,11 +129,23 @@ public final class FocusMode {
 
         Moomoo.insertAfterChannels(visible);
 
+        if (Moomoo.isRegistered()) {
+            FocusSections.insertAfter(visible, Moomoo.SECTION_ID);
+        }
+
         return visible;
     }
 
     public static int bootSectionId(int storedId) {
+        if (sKids) {
+            return Moomoo.SECTION_ID;
+        }
+
         return sActive ? MediaGroup.TYPE_SUBSCRIPTIONS : storedId;
+    }
+
+    public static boolean topButtonEnabled(boolean storedValue) {
+        return storedValue && !sKids;
     }
 
     public static int playbackMode(int storedMode) {

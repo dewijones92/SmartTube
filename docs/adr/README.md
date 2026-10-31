@@ -17,4 +17,5 @@ open to challenge.
 | [0008](0008-moomoo-section.md) | Moomoo kids' section | Accepted |
 | [0009](0009-instant-prompt-and-afr-restart.md) | Instant start after the prompt; restart after frame-rate switch | Accepted |
 | [0010](0010-speed-batch-1.md) | Speed batch 1: earlier format fetch, warm engine, no AFR overlay wait | Accepted |
+| [0012](0012-batch3-tennis-kids-bedtime.md) | Tennis, Kids mode, bedtime, more Moomoo, Continue watching | Accepted |
 | [0011](0011-speed-batch-2.md) | Speed batch 2: warm PO token, sticky refresh rate, section cache, next-episode preload | Accepted |
