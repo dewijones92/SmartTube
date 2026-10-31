@@ -38,6 +38,7 @@ public class AutoFrameRateController extends BasePlayerController implements Aut
     private final Runnable mApplyAfr = this::applyAfr;
     private final Runnable mApplyAfrStop = this::applyAfrStop;
     private boolean mIsPlay;
+    private long mSwitchStartPositionMs = -1;
     private VideoStateController mStateController;
     private HQDialogController mHQDialogController;
     private final Runnable mPlaybackResumeHandler = () -> {
@@ -72,6 +73,7 @@ public class AutoFrameRateController extends BasePlayerController implements Aut
 
     @Override
     public void onVideoLoaded(Video item) {
+        mSwitchStartPositionMs = -1;
         savePlayback();
 
         // Sometimes AFR is not working on activity startup. Trying to fix with delay.
@@ -94,6 +96,7 @@ public class AutoFrameRateController extends BasePlayerController implements Aut
                 newMode.getRefreshRate());
         Log.d(TAG, message);
         //MessageHelpers.showLongMessage(getActivity(), message);
+        rememberSwitchStartPosition();
         maybePausePlayback();
         getPlayerData().setAfrSwitchTimeMs(System.currentTimeMillis());
     }
@@ -230,7 +233,21 @@ public class AutoFrameRateController extends BasePlayerController implements Aut
         // Fix restore after disable afr: don't do afr enabled check
         if (!skipAfr() && mAutoFrameRateHelper.isSupported() && getPlayerData().getAfrPauseMs() > 0) {
             mStateController.blockPlay(false);
+            rewindToSwitchStartPosition();
             getPlayer().setPlayWhenReady(mIsPlay);
+        }
+    }
+
+    private void rememberSwitchStartPosition() {
+        if (getPlayer() != null && getPlayerData().getAfrPauseMs() > 0 && mSwitchStartPositionMs < 0) {
+            mSwitchStartPositionMs = Math.max(0, getPlayer().getPositionMs());
+        }
+    }
+
+    private void rewindToSwitchStartPosition() {
+        if (mSwitchStartPositionMs >= 0) {
+            getPlayer().setPositionMs(mSwitchStartPositionMs);
+            mSwitchStartPositionMs = -1;
         }
     }
 
