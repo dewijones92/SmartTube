@@ -106,13 +106,14 @@ public class SplashPresenter extends BasePresenter<SplashView> {
     }
 
     private void runPerViewTasks() {
+        Intent launchIntent = getView().getNewIntent();
         Utils.postDelayed(mCheckForUpdates, APP_INIT_DELAY_MS);
         Utils.updateRemoteControlService(getContext());
 
         checkMasterPassword(() -> applyNewIntent(getView().getNewIntent()));
 
         showAccountSelectionIfNeeded(); // should be placed after Intent chain
-        FocusMode.onAppLaunch(getContext(), getView().getNewIntent());
+        FocusMode.onAppLaunch(getContext(), launchIntent);
         checkAccountPassword();
     }
 

@@ -45,7 +45,12 @@ public final class FocusMode {
     }
 
     public static void onAppLaunch(Context context, Intent intent) {
-        if (context == null || !context.getResources().getBoolean(R.bool.focus_mode_available)) {
+        if (context == null) {
+            Log.e(TAG, "dewidebug prompt skipped: no context at app launch");
+            return;
+        }
+
+        if (!context.getResources().getBoolean(R.bool.focus_mode_available)) {
             return;
         }
 
