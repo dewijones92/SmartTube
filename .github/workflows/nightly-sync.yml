@@ -32,6 +32,7 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
 
       - name: Merge upstream
         id: merge
@@ -60,7 +61,7 @@ jobs:
             if ! git merge --no-edit upstream/master; then
               git diff --name-only --diff-filter=U > conflicted-files.txt
               echo "Merge conflict in:"; cat conflicted-files.txt
-              git merge --abort
+              git merge --abort || true
               echo "conflict=true" >> "$GITHUB_OUTPUT"
               echo "build=false" >> "$GITHUB_OUTPUT"
               exit 0
@@ -170,10 +171,6 @@ jobs:
           name: smarttube-focus-${{ steps.files.outputs.versionName }}
           path: release/
 
-      - name: Push merge
-        if: steps.merge.outputs.merged == 'true' && env.PUBLISH == 'true'
-        run: git push origin "HEAD:${GITHUB_REF_NAME}"
-
       - name: Publish release
         if: steps.merge.outputs.build == 'true' && env.PUBLISH == 'true'
         env:
@@ -183,7 +180,32 @@ jobs:
           SHA=$(git rev-parse HEAD)
           gh release create --repo "$GITHUB_REPOSITORY" "focus-${VERSION_NAME}" release/* --target "$SHA" \
             --title "SmartTube Focus ${VERSION_NAME}" --notes-file upstream-changes.txt
-          gh release delete --repo "$GITHUB_REPOSITORY" latest --cleanup-tag --yes || echo "no previous latest release"
-          gh release create --repo "$GITHUB_REPOSITORY" latest release/* --target "$SHA" --latest \
-            --title "SmartTube Focus (latest: ${VERSION_NAME})" --notes-file upstream-changes.txt
+          if gh release view --repo "$GITHUB_REPOSITORY" latest >/dev/null 2>&1; then
+            gh release upload --repo "$GITHUB_REPOSITORY" latest release/* --clobber
+            gh release edit --repo "$GITHUB_REPOSITORY" latest --latest \
+              --title "SmartTube Focus (latest: ${VERSION_NAME})" --notes-file upstream-changes.txt
+          else
+            gh release create --repo "$GITHUB_REPOSITORY" latest release/* --target "$SHA" --latest \
+              --title "SmartTube Focus (latest: ${VERSION_NAME})" --notes-file upstream-changes.txt
+          fi
           echo "Published ${VERSION_NAME} at ${SHA}"
+
+      - name: Push merge
+        if: steps.merge.outputs.merged == 'true' && env.PUBLISH == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git push origin "HEAD:${GITHUB_REF_NAME}"; then
+            echo "Pushed merge $(git rev-parse --short HEAD)"
+            exit 0
+          fi
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          TITLE="Nightly sync could not push the upstream merge"
+          BODY="The build was published, but pushing the merge to ${GITHUB_REF_NAME} failed. Run: ${RUN_URL}"
+          EXISTING=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"${TITLE}\" in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment --repo "$GITHUB_REPOSITORY" "$EXISTING" --body "$BODY"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$BODY"
+          fi
+          exit 1

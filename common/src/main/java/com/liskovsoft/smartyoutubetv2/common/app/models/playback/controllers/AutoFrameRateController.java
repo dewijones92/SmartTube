@@ -235,7 +235,7 @@ public class AutoFrameRateController extends BasePlayerController implements Aut
             mStateController.blockPlay(false);
             getPlayer().setPlayWhenReady(mIsPlay);
         }
-        AfrRestart.onResume(getContext(), getPlayer());
+        AfrRestart.onResume(getContext(), getPlayer(), mIsPlay);
     }
 
     // Avoid nested dialogs. They have problems with timings. So player controls may hide without user interaction.

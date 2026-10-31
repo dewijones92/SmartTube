@@ -30,6 +30,10 @@ final class FocusPrefetch {
         }
     }
 
+    static void invalidateHome() {
+        sHome.invalidate("Shorts setting changed by No");
+    }
+
     static void start() {
         sSubscriptions.start();
         sHome.start();
@@ -45,8 +49,9 @@ final class FocusPrefetch {
             mName = name;
         }
 
-        Observable<T> wrap(Observable<T> source) {
+        synchronized Observable<T> wrap(Observable<T> source) {
             mSource = source;
+            invalidate("data source replaced");
             return Observable.defer(this::take);
         }
 
@@ -65,8 +70,18 @@ final class FocusPrefetch {
             mStartedMs = System.currentTimeMillis();
             mCached.subscribe(
                     result -> Log.d(TAG, "dewidebug prefetch %s ready after %s ms", mName, System.currentTimeMillis() - mStartedMs),
-                    error -> Log.e(TAG, "dewidebug prefetch %s failed: %s", mName, error.getMessage()));
+                    error -> {
+                        Log.e(TAG, "dewidebug prefetch %s failed, discarding: %s", mName, error.getMessage());
+                        invalidate("prefetch failed");
+                    });
             Log.d(TAG, "dewidebug prefetch %s started", mName);
+        }
+
+        synchronized void invalidate(String reason) {
+            if (mCached != null) {
+                Log.d(TAG, "dewidebug prefetch %s discarded: %s", mName, reason);
+            }
+            mCached = null;
         }
 
         private synchronized Observable<T> take() {

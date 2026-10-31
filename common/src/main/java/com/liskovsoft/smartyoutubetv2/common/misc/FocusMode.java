@@ -39,7 +39,7 @@ public final class FocusMode {
             MediaGroup.TYPE_MUSIC,
             MediaGroup.TYPE_MOVIES
     };
-    private static boolean sActive;
+    private static volatile boolean sActive;
 
     private FocusMode() {
     }
@@ -69,13 +69,14 @@ public final class FocusMode {
 
         if (IntentExtractor.hasData(intent)) {
             Log.d(TAG, "dewidebug prompt skipped: launched with a link or cast, keeping active=%s", sActive);
+            applyShortsHiding(context, sActive);
             return;
         }
 
         Log.d(TAG, "dewidebug app launch: defaulting to focus mode and showing prompt");
         BrowsePresenter.instance(context);
-        FocusPrefetch.start();
         setActive(context, true, "default before prompt");
+        FocusPrefetch.start();
 
         AppDialogPresenter dialog = AppDialogPresenter.instance(context);
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_yes), option -> {
@@ -84,6 +85,7 @@ public final class FocusMode {
         }));
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_no), option -> {
             setActive(context, false, "user chose No");
+            FocusPrefetch.invalidateHome();
             dialog.closeDialog();
             BrowsePresenter.instance(context).selectSection(MediaGroup.TYPE_HOME);
         }));

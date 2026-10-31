@@ -19,3 +19,11 @@ Upstream's own workflows are disabled on the fork.
   targets yuliskov/SmartTube (this broke the first release and issue).
 - Only `master` publishes; other branches can be used to test the conflict path.
 - A clean merge can still break behaviour silently; hooks are one-liners to keep that rare.
+
+## Amendment 2026-10-31 (review findings)
+- The workflow checks out with a **write deploy key** (`DEPLOY_KEY` secret; public half registered as a repo
+  deploy key, private copy in `~/.credentials/smarttube-focus-deploy-key`). `GITHUB_TOKEN` can never push a
+  merge that changes `.github/workflows/*`, which upstream does regularly.
+- Order is now build → publish → push. A failed push opens (or comments on) an issue titled "Nightly sync could
+  not push the upstream merge", so a stuck sync is never silent. `latest` is updated in place
+  (`gh release upload --clobber`), so the updater URL never 404s mid-run.

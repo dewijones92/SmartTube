@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <bool name="focus_mode_available">true</bool>
+    <string translatable="false" name="search_authority">org.smarttube.focus</string>
 
     <string-array name="update_urls">
         <item>https://github.com/dewijones92/SmartTube/releases/download/latest/smarttube_focus.json</item>

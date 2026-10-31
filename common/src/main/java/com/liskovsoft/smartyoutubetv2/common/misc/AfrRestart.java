@@ -21,6 +21,11 @@ public final class AfrRestart {
             return;
         }
 
+        if (pauseMs <= 0) {
+            Log.d(TAG, "dewidebug AFR switch to %s Hz without a pause setting: not rewinding", refreshRate);
+            return;
+        }
+
         if (sStartPositionMs < 0) {
             sStartPositionMs = Math.max(0, player.getPositionMs());
         }
@@ -30,7 +35,7 @@ public final class AfrRestart {
         MessageHelpers.showLongMessage(context, message);
     }
 
-    public static void onResume(Context context, PlayerEngine player) {
+    public static void onResume(Context context, PlayerEngine player, boolean play) {
         if (context == null || player == null || sStartPositionMs < 0) {
             return;
         }
@@ -38,9 +43,9 @@ public final class AfrRestart {
         long start = sStartPositionMs;
         sStartPositionMs = -1;
         long current = player.getPositionMs();
-        Log.d(TAG, "dewidebug AFR resume: rewinding from %s ms to %s ms and playing", current, start);
+        Log.d(TAG, "dewidebug AFR resume: rewinding from %s ms to %s ms, play=%s", current, start, play);
         player.setPositionMs(start);
-        player.setPlayWhenReady(true);
+        player.setPlayWhenReady(play);
     }
 
     public static void reset() {
