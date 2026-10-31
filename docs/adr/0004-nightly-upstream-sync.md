@@ -24,6 +24,8 @@ Upstream's own workflows are disabled on the fork.
 - The workflow checks out with a **write deploy key** (`DEPLOY_KEY` secret; public half registered as a repo
   deploy key, private copy in `~/.credentials/smarttube-focus-deploy-key`). `GITHUB_TOKEN` can never push a
   merge that changes `.github/workflows/*`, which upstream does regularly.
-- Order is now build → publish → push. A failed push opens (or comments on) an issue titled "Nightly sync could
-  not push the upstream merge", so a stuck sync is never silent. `latest` is updated in place
+- Order is build → push → publish (a release cannot target a commit GitHub doesn't have yet). A failed push
+  opens (or comments on) an issue titled "Nightly sync could not push the upstream merge" and stops before
+  publishing, so a stuck sync is never silent. APKs are uploaded before the JSON so the updater never sees a
+  new version number pointing at an old APK. `latest` is updated in place
   (`gh release upload --clobber`), so the updater URL never 404s mid-run.

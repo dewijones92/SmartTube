@@ -6,6 +6,7 @@ import android.os.Build.VERSION;
 import android.view.Window;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.smartyoutubetv2.common.autoframerate.internal.DisplayHolder.Mode;
+import com.liskovsoft.smartyoutubetv2.common.misc.FocusSpeed;
 import com.liskovsoft.smartyoutubetv2.common.prefs.AppPrefs;
 
 import java.util.ArrayList;
@@ -423,7 +424,7 @@ public class DisplaySyncHelper implements UhdHelperListener {
             }
 
             mNewMode = closerMode;
-            mUhdHelper.setPreferredDisplayModeId(window, mNewMode.getModeId(), true);
+            mUhdHelper.setPreferredDisplayModeId(window, mNewMode.getModeId(), FocusSpeed.allowAfrOverlay(mContext));
             mDisplaySyncInProgress = true;
 
             if (mListener != null) {

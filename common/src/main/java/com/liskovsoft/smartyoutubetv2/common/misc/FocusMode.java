@@ -67,6 +67,8 @@ public final class FocusMode {
             return;
         }
 
+        FocusSpeed.warmEngine(context);
+
         if (IntentExtractor.hasData(intent)) {
             Log.d(TAG, "dewidebug prompt skipped: launched with a link or cast, keeping active=%s", sActive);
             applyShortsHiding(context, sActive);
@@ -84,8 +86,8 @@ public final class FocusMode {
             dialog.closeDialog();
         }));
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_no), option -> {
+            FocusPrefetch.invalidateAll();
             setActive(context, false, "user chose No");
-            FocusPrefetch.invalidateHome();
             dialog.closeDialog();
             BrowsePresenter.instance(context).selectSection(MediaGroup.TYPE_HOME);
         }));

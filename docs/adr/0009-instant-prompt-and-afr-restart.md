@@ -17,7 +17,8 @@ loads fetch fresh as before. Choosing No now jumps to Home (`BrowsePresenter.sel
 `ACTION_AUDIO_BECOMING_NOISY` during the HDMI re-sync. Device setting "Auto Frame Rate (pause when
 switching)" set from Never to **4.0 s** (blocks playback at load, resumes after the delay). `AfrRestart`
 (called from `AutoFrameRateController`) shows "Adjusting TV to N Hz…", records the position when the switch
-starts, and on resume seeks back to it and plays.
+starts, and on resume seeks back to it and plays — only when the AFR pause setting is above 0 (with Never, upstream
+behaviour is unchanged). The play/pause state after resume follows the controller's saved state.
 
 ## Consequences
 - A freshly opened video starts at 0:00 after the switch; a resumed one starts at its saved position.
