@@ -10,7 +10,10 @@ in the living room. Upstream SmartTube is merged in every night, so keep our foo
    a reviewer that has not seen the reasoning. No batch reaches the TV without it.
 2. **Check every feature for upstream value.** When a feature lands, assess whether it would make sense as a
    pull request to `yuliskov/SmartTube`, and record the verdict in `docs/UPSTREAM-CANDIDATES.md`. Never open
-   an upstream PR without Dewi's go.
+   an upstream PR without Dewi's go. An upstream PR (unless truly trivial) is only offered for a feature that has
+   already passed rule 6 in this fork, and its description says so plainly: device, build, what happy path was
+   run, what was checked (screen, logcat, timings). If the upstream branch's code differs from the fork's
+   (no flavour gate, different call), test the exact upstream build too, or say it wasn't (Dewi, 2026-10-31).
 3. **Record decisions as ADRs** in `docs/adr/` (next number, add to the README table, say who decided).
 4. **Touch upstream files minimally.** Put logic in `common/.../misc/` (our classes) and keep upstream edits to
    one-line hooks. Gate Focus-only behaviour on `R.bool.focus_mode_available`, which is true only in
