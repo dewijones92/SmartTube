@@ -12,6 +12,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.data.BrowseSection;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.VideoGroup;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerConstants;
+import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerEngine;
 import com.liskovsoft.youtubeapi.service.YouTubeServiceManager;
 
 import java.util.ArrayList;
@@ -30,7 +31,9 @@ public final class Moomoo {
             {"UCG2CL6EUjG8TVT1Tpl9nJdg", "Ms Rachel"},
             {"UCAOtE1V7Ots4DjM8JLlrYgg", "Peppa Pig"}
     };
+    private static final long PRELOAD_BEFORE_END_MS = 120_000;
     private static boolean sRegistered;
+    private static String sPreloadedVideoId;
     private static Video sSectionItem;
 
     private Moomoo() {
@@ -86,6 +89,22 @@ public final class Moomoo {
         Log.d(TAG, "dewidebug Moomoo playback: index=%s size=%s hasNext=%s", index, group.getSize(), hasNext);
 
         return hasNext ? PlayerConstants.PLAYBACK_MODE_ALL : PlayerConstants.PLAYBACK_MODE_PAUSE;
+    }
+
+    public static void preloadNextIfNeeded(Context context, PlayerEngine player, Video video, Video next) {
+        if (player == null || next == null || next.videoId == null || !isMoomooVideo(video)) {
+            return;
+        }
+
+        long remainingMs = player.getDurationMs() - player.getPositionMs();
+
+        if (remainingMs <= 0 || remainingMs > PRELOAD_BEFORE_END_MS || next.videoId.equals(sPreloadedVideoId)) {
+            return;
+        }
+
+        sPreloadedVideoId = next.videoId;
+        Log.d(TAG, "dewidebug Moomoo preloading next episode %s, %s ms before the end", next.videoId, remainingMs);
+        FocusSpeed.prefetchFormatInfo(context, next);
     }
 
     private static List<MediaGroup> loadRows() {

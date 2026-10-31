@@ -11,5 +11,8 @@ Verdicts: **Yes** (worth offering), **Maybe** (needs generalising first), **No**
 | Start the format request on click, before the player screen opens | 0010 | **Yes** | One line in `PlaybackPresenter`, reuses the existing `FormatInfoWrapper` cache; drop the flavour gate. Needs a before/after timing to convince the maintainer. |
 | Warm the player engine at launch instead of after 10 s | 0010 | **Yes** | Async call already used by upstream, just earlier. |
 | Skip the Amazon interstitial wait before 4K mode switches | 0010 | **Maybe** | Saves ~2 s on Fire OS 8 where the broadcast never comes; may matter on other Amazon devices. Offer as an option. |
+| Keep the AFR refresh rate on other screens after leaving the player (no switch back and forth between videos) | 0011 | **Yes** | Finishes what upstream's unused `ModeSyncManager` set out to do. Would want an option (some users want the UI back at 60 Hz). |
+| 60 s section cache instead of refetching on every sidebar focus | 0011 | **Maybe** | Big feel improvement; needs care with menu actions and a setting. |
+| Preload the next video's info near the end | 0011 | **Maybe** | Upstream has a dead `preloadNextVideoIfNeeded`; ours is scoped to Moomoo rows. Generalised, it'd be a clean PR. |
 | Moomoo kids' section with fixed channels | 0008 | **No** | Hard-coded to our family's channels. A generic "pin a channel's Popular videos as a section" might be Maybe. |
 | Separate flavour, jade branding, nightly sync, own update URL | 0002, 0004–0006 | **No** | Fork plumbing. |

@@ -78,7 +78,7 @@ public final class FocusMode {
         Log.d(TAG, "dewidebug app launch: defaulting to focus mode and showing prompt");
         BrowsePresenter.instance(context);
         setActive(context, true, "default before prompt");
-        FocusPrefetch.start();
+        FocusPrefetch.start(context);
 
         AppDialogPresenter dialog = AppDialogPresenter.instance(context);
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_yes), option -> {
@@ -86,13 +86,17 @@ public final class FocusMode {
             dialog.closeDialog();
         }));
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_no), option -> {
-            FocusPrefetch.invalidateAll();
+            FocusPrefetch.invalidateAll("Shorts setting changed by No");
             setActive(context, false, "user chose No");
             dialog.closeDialog();
             BrowsePresenter.instance(context).selectSection(MediaGroup.TYPE_HOME);
         }));
         dialog.showDialog(context.getString(R.string.focus_mode_title),
                 () -> Log.d(TAG, "dewidebug prompt closed: active=%s", sActive));
+    }
+
+    public static void onRefresh() {
+        FocusPrefetch.invalidateAll("refresh requested");
     }
 
     public static List<Video> filterSections(List<Video> items) {

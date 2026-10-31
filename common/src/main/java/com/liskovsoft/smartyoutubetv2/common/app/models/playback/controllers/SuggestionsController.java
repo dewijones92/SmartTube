@@ -28,6 +28,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.presenters.AppDialogPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
 import com.liskovsoft.smartyoutubetv2.common.misc.BrowseProcessorManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
+import com.liskovsoft.smartyoutubetv2.common.misc.Moomoo;
 import com.liskovsoft.smartyoutubetv2.common.prefs.GeneralData;
 import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
 import com.liskovsoft.youtubeapi.service.YouTubeServiceManager;
@@ -148,6 +149,7 @@ public class SuggestionsController extends BasePlayerController {
     @Override
     public void onTickle() {
         updateLiveDescription();
+        Moomoo.preloadNextIfNeeded(getContext(), getPlayer(), getVideo(), getNext());
     }
 
     private void updateLiveDescription() {

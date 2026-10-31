@@ -18,6 +18,7 @@ import com.liskovsoft.smartyoutubetv2.common.autoframerate.ModeSyncManager;
 import com.liskovsoft.smartyoutubetv2.common.autoframerate.internal.DisplayHolder.Mode;
 import com.liskovsoft.smartyoutubetv2.common.autoframerate.internal.DisplaySyncHelper.AutoFrameRateListener;
 import com.liskovsoft.smartyoutubetv2.common.autoframerate.internal.UhdHelper;
+import com.liskovsoft.smartyoutubetv2.common.misc.FocusSpeed;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
 import com.liskovsoft.smartyoutubetv2.common.utils.TvQuickActions;
 import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
@@ -97,6 +98,7 @@ public class AutoFrameRateController extends BasePlayerController implements Aut
         Log.d(TAG, message);
         //MessageHelpers.showLongMessage(getActivity(), message);
         AfrRestart.onModeStart(getContext(), getPlayer(), newMode.getRefreshRate(), getPlayerData().getAfrPauseMs());
+        FocusSpeed.onAfrModeApplied(getContext(), newMode.getModeId());
         maybePausePlayback();
         getPlayerData().setAfrSwitchTimeMs(System.currentTimeMillis());
     }
