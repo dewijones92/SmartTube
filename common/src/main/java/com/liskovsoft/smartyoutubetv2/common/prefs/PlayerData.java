@@ -68,6 +68,7 @@ public class PlayerData extends DataChangeBase implements PlayerConstants, Profi
     private boolean mIsAfrFpsCorrectionEnabled;
     private boolean mIsAfrResSwitchEnabled;
     private int mAfrPauseMs;
+    private boolean mIsAfrKeepModeEnabled;
     private int mAudioDelayMs;
     private String mAudioLanguage;
     private String mSubtitleLanguage;
@@ -692,6 +693,15 @@ public class PlayerData extends DataChangeBase implements PlayerConstants, Profi
         persistState();
     }
 
+    public boolean isAfrKeepModeEnabled() {
+        return mIsAfrKeepModeEnabled;
+    }
+
+    public void setAfrKeepModeEnabled(boolean enable) {
+        mIsAfrKeepModeEnabled = enable;
+        persistState();
+    }
+
     public boolean isSkipShortsEnabled() {
         return mIsSkipShortsEnabled;
     }
@@ -847,6 +857,7 @@ public class PlayerData extends DataChangeBase implements PlayerConstants, Profi
         mLastAudioLanguages = Helpers.parseStrList(split, 60);
         mIsVideoFlipEnabled = Helpers.parseBoolean(split, 61, false);
         mIsAudioDelayEnabled = Helpers.parseBoolean(split, 62, false);
+        mIsAfrKeepModeEnabled = Helpers.parseBoolean(split, 63, false);
 
         if (speeds != null) {
             for (String speedSpec : speeds) {
@@ -884,7 +895,7 @@ public class PlayerData extends DataChangeBase implements PlayerConstants, Profi
                 mIsNumberKeySeekEnabled, mIsSkip24RateEnabled, mAfrPauseMs, mIsLiveChatEnabled, mLastSubtitleFormats, mLastSpeed, mRotationAngle,
                 mZoomPercents, mPlaybackMode, mAudioLanguage, mSubtitleLanguage, mEnabledSubtitlesPerChannel, mIsSubtitlesPerChannelEnabled,
                 mIsSpeedPerChannelEnabled, Helpers.mergeArray(mSpeeds.values().toArray()), mPitch, mIsSkipShortsEnabled, mLastAudioLanguages,
-                mIsVideoFlipEnabled, mIsAudioDelayEnabled
+                mIsVideoFlipEnabled, mIsAudioDelayEnabled, mIsAfrKeepModeEnabled
         ));
     }
 

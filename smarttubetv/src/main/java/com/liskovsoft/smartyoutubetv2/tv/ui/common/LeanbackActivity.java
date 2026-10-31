@@ -32,6 +32,7 @@ public abstract class LeanbackActivity extends MotherActivity {
         super.onCreate(savedInstanceState);
         mBackgroundManager = new UriBackgroundManager(this);
         mModeSyncManager = ModeSyncManager.instance();
+        mModeSyncManager.register(this);
         mDoubleBackManager = new DoubleBackManager2(this);
         mGlobalKeyTranslator = this instanceof PlaybackActivity ?
                 new PlayerKeyTranslator(this) :
@@ -87,6 +88,7 @@ public abstract class LeanbackActivity extends MotherActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        mModeSyncManager.unregister(this);
         mBackgroundManager.onDestroy();
     }
 

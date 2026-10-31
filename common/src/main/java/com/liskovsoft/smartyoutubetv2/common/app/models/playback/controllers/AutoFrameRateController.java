@@ -55,7 +55,9 @@ public class AutoFrameRateController extends BasePlayerController implements Aut
 
     @Override
     public void onInit() {
-        mAutoFrameRateHelper.saveOriginalState(getActivity());
+        if (!mModeSyncManager.isKeepingMode() || !mAutoFrameRateHelper.hasOriginalState()) {
+            mAutoFrameRateHelper.saveOriginalState(getActivity());
+        }
         mStateController = getController(VideoStateController.class);
         mHQDialogController = getController(HQDialogController.class);
     }
@@ -94,6 +96,9 @@ public class AutoFrameRateController extends BasePlayerController implements Aut
                 newMode.getRefreshRate());
         Log.d(TAG, message);
         //MessageHelpers.showLongMessage(getActivity(), message);
+        if (getPlayerData().isAfrKeepModeEnabled()) {
+            mModeSyncManager.keepMode(newMode.getModeId());
+        }
         maybePausePlayback();
         getPlayerData().setAfrSwitchTimeMs(System.currentTimeMillis());
     }
@@ -181,6 +186,7 @@ public class AutoFrameRateController extends BasePlayerController implements Aut
     private void restoreAfr() {
         String msg = "Restoring original frame rate...";
         Log.d(TAG, msg);
+        mModeSyncManager.clearKeptMode();
         mAutoFrameRateHelper.restoreOriginalState(getActivity());
         mModeSyncManager.save(null);
     }
@@ -312,12 +318,19 @@ public class AutoFrameRateController extends BasePlayerController implements Aut
         OptionItem skipShortsOption = UiOptionItem.from(skipShorts, optionItem -> {
             playerData.setSkipShortsEnabled(optionItem.isSelected());
         }, playerData.isSkipShortsEnabled());
+        OptionItem keepModeOption = UiOptionItem.from(context.getString(R.string.auto_frame_rate_keep_mode), optionItem -> {
+            playerData.setAfrKeepModeEnabled(optionItem.isSelected());
+            if (!optionItem.isSelected()) {
+                ModeSyncManager.instance().clearKeptMode();
+            }
+        }, playerData.isAfrKeepModeEnabled());
 
         afrResSwitchOption.setRequired(afrEnableOption);
         afrFpsCorrectionOption.setRequired(afrEnableOption);
         doubleRefreshRateOption.setRequired(afrEnableOption);
         skip24RateOption.setRequired(afrEnableOption);
         skipShortsOption.setRequired(afrEnableOption);
+        keepModeOption.setRequired(afrEnableOption);
 
         options.add(afrEnableOption);
         options.add(afrResSwitchOption);
@@ -325,6 +338,7 @@ public class AutoFrameRateController extends BasePlayerController implements Aut
         options.add(doubleRefreshRateOption);
         options.add(skip24RateOption);
         options.add(skipShortsOption);
+        options.add(keepModeOption);
 
         return OptionCategory.from(AUTO_FRAME_RATE_ID, OptionCategory.TYPE_CHECKBOX_LIST, afrEnable, options);
     }

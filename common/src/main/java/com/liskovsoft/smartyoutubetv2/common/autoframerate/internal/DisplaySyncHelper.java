@@ -454,6 +454,10 @@ public class DisplaySyncHelper implements UhdHelperListener {
         return mUhdHelper;
     }
 
+    public boolean hasOriginalState() {
+        return mOriginalMode != null;
+    }
+
     public void saveOriginalState() {
         saveState(STATE_ORIGINAL);
     }

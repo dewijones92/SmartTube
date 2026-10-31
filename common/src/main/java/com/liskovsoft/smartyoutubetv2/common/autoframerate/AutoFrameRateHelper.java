@@ -71,6 +71,10 @@ public class AutoFrameRateHelper {
         }
     }
 
+    public boolean hasOriginalState() {
+        return mSyncHelper.hasOriginalState();
+    }
+
     public void saveOriginalState(Activity activity) {
         setContext(activity);
 

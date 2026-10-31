@@ -539,6 +539,7 @@
     <string name="chapters">Chapters</string>
     <string name="card_multiline_subtitle">Multiline subtitles</string>
     <string name="auto_frame_rate_modes">Supported modes</string>
+    <string name="auto_frame_rate_keep_mode">Keep the refresh rate after leaving the player</string>
     <string name="loading">Loading…</string>
     <string name="hide_streams">Hide streams from Subscriptions</string>
     <string name="video_rotate">Rotate</string>
