@@ -17,6 +17,13 @@ in the living room. Upstream SmartTube is merged in every night, so keep our foo
    `smarttubetv/src/stfocus/res/values/focus.xml`. Fewer upstream lines means fewer nightly merge conflicts.
 5. **Match each file's line endings.** Most upstream Java is CRLF; `build.gradle` is LF. After any scripted
    edit, `git diff --shortstat` and `git diff --shortstat --ignore-all-space` must match.
+6. **Every non-trivial change is tested end to end on the TV before Dewi gets it** (Dewi, 2026-10-31: *"so I
+   don't get any nasty surprises when I use it"*). At least one real happy path of the changed feature, driven
+   on the Fire Stick with the build that will ship: open the app, do what Dewi would do, and check the result on
+   screen (screenshot) and in the device state or logcat, not just that it compiled or that a reviewer approved.
+   Also check logcat for `FATAL EXCEPTION` across the run. "Trivial" means docs, strings, or a change with no
+   runtime path; when unsure, it isn't trivial. Why: on 2026-10-31 two code reviews approved a batch that crashed
+   on the first TV run.
 
 ## How a batch runs (Dewi, 2026-10-31; modelled on Totum's)
 
@@ -35,8 +42,11 @@ in the living room. Upstream SmartTube is merged in every night, so keep our foo
      `focus/tools/measure-start.sh` against the build installed before the batch, cold and at least three warm runs
      (one run is noise). Set SmartTube's own player volume to 0% first (Settings › Player › Volume) and restore it
      after: the system mute key does not reliably mute playback on this stick. Record the numbers in the ADR.
-4. **Then ship and report.** Push, build, install (or let the in-app updater do it), check the changed screen on
-   the TV, and report in the end-of-run shape: 🚧 Needs you, Changed, 🔍 Found, ⚠️ Couldn't confirm.
+4. **Test end to end on the TV, then ship.** Build the batch on a branch (non-`master` builds don't publish),
+   `gh run download` the APK, `adb install -r` it, and run each changed feature's happy path on the TV (rule 6).
+   Only then merge to `master` and publish. The TV is Dewi's to lend: switch it on with `KEYCODE_WAKEUP` when
+   needed and OFF afterwards with `KEYCODE_TV_POWER` (sleeping the stick does not turn the TV off).
+5. **Report** in the end-of-run shape: 🚧 Needs you, Changed, 🔍 Found, ⚠️ Couldn't confirm.
 
 ## Layout
 
