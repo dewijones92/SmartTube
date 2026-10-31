@@ -15,3 +15,4 @@ open to challenge.
 | [0006](0006-signing-and-versioning.md) | Own signing key; versionCode scheme | Accepted |
 | [0007](0007-fire-stick-setup.md) | Fire Stick: stock app removed, Focus pinned first | Accepted |
 | [0008](0008-moomoo-section.md) | Moomoo kids' section | Accepted |
+| [0009](0009-instant-prompt-and-afr-restart.md) | Instant start after the prompt; restart after frame-rate switch | Accepted |

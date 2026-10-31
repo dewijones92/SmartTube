@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.smartyoutubetv2.common.R;
+import com.liskovsoft.smartyoutubetv2.common.app.models.data.BrowseSection;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerConstants;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.UiOptionItem;
@@ -17,6 +18,9 @@ import com.liskovsoft.youtubeapi.service.internal.MediaServiceData;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import io.reactivex.Observable;
 
 public final class FocusMode {
     private static final String TAG = FocusMode.class.getSimpleName();
@@ -44,6 +48,15 @@ public final class FocusMode {
         return sActive;
     }
 
+    public static void registerSections(Context context, Map<Integer, BrowseSection> sections,
+                                        Map<Integer, Observable<MediaGroup>> grids, Map<Integer, Observable<List<MediaGroup>>> rows) {
+        Moomoo.register(context, sections, rows);
+
+        if (context != null && context.getResources().getBoolean(R.bool.focus_mode_available)) {
+            FocusPrefetch.wrap(grids, rows);
+        }
+    }
+
     public static void onAppLaunch(Context context, Intent intent) {
         if (context == null) {
             Log.e(TAG, "dewidebug prompt skipped: no context at app launch");
@@ -60,6 +73,8 @@ public final class FocusMode {
         }
 
         Log.d(TAG, "dewidebug app launch: defaulting to focus mode and showing prompt");
+        BrowsePresenter.instance(context);
+        FocusPrefetch.start();
         setActive(context, true, "default before prompt");
 
         AppDialogPresenter dialog = AppDialogPresenter.instance(context);
@@ -70,6 +85,7 @@ public final class FocusMode {
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_no), option -> {
             setActive(context, false, "user chose No");
             dialog.closeDialog();
+            BrowsePresenter.instance(context).selectSection(MediaGroup.TYPE_HOME);
         }));
         dialog.showDialog(context.getString(R.string.focus_mode_title),
                 () -> Log.d(TAG, "dewidebug prompt closed: active=%s", sActive));

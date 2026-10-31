@@ -13,6 +13,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.UiOptionItem
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.AppDialogPresenter;
 import com.liskovsoft.smartyoutubetv2.common.autoframerate.AutoFrameRateHelper;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.FormatItem;
+import com.liskovsoft.smartyoutubetv2.common.misc.AfrRestart;
 import com.liskovsoft.smartyoutubetv2.common.autoframerate.ModeSyncManager;
 import com.liskovsoft.smartyoutubetv2.common.autoframerate.internal.DisplayHolder.Mode;
 import com.liskovsoft.smartyoutubetv2.common.autoframerate.internal.DisplaySyncHelper.AutoFrameRateListener;
@@ -72,6 +73,7 @@ public class AutoFrameRateController extends BasePlayerController implements Aut
 
     @Override
     public void onVideoLoaded(Video item) {
+        AfrRestart.reset();
         savePlayback();
 
         // Sometimes AFR is not working on activity startup. Trying to fix with delay.
@@ -94,6 +96,7 @@ public class AutoFrameRateController extends BasePlayerController implements Aut
                 newMode.getRefreshRate());
         Log.d(TAG, message);
         //MessageHelpers.showLongMessage(getActivity(), message);
+        AfrRestart.onModeStart(getContext(), getPlayer(), newMode.getRefreshRate(), getPlayerData().getAfrPauseMs());
         maybePausePlayback();
         getPlayerData().setAfrSwitchTimeMs(System.currentTimeMillis());
     }
@@ -232,6 +235,7 @@ public class AutoFrameRateController extends BasePlayerController implements Aut
             mStateController.blockPlay(false);
             getPlayer().setPlayWhenReady(mIsPlay);
         }
+        AfrRestart.onResume(getContext(), getPlayer());
     }
 
     // Avoid nested dialogs. They have problems with timings. So player controls may hide without user interaction.
