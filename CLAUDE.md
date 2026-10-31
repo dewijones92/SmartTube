@@ -49,6 +49,8 @@ in the living room. Upstream SmartTube is merged in every night, so keep our foo
    `gh run download` the APK, `adb install -r` it, and run each changed feature's happy path on the TV (rule 6).
    Only then merge to `master` and publish. The TV is Dewi's to lend: switch it on with `KEYCODE_WAKEUP` when
    needed and OFF afterwards with `KEYCODE_TV_POWER` (sleeping the stick does not turn the TV off).
+   **Test with tennis videos, never kids' content** (Peppa, Ms Rachel, Moomoo rows): Dewi's son gets distracted
+   (Dewi, 2026-10-31). Deep-link tennis video IDs; for Moomoo itself, check the rows render without playing.
 5. **Report** in the end-of-run shape: 🚧 Needs you, Changed, 🔍 Found, ⚠️ Couldn't confirm.
 
 ## Layout
@@ -59,7 +61,7 @@ in the living room. Upstream SmartTube is merged in every night, so keep our foo
 - `common/.../misc/AfrRestart.java` "Adjusting TV…" + restart after a frame-rate switch (ADR 0009)
 - `smarttubetv/src/stfocus/` flavour resources: icons, colours, update URL
 - `focus/branding/*.py` regenerate icons
-- `focus/tools/measure-start.sh` click-to-picture timings from logcat (cold/warm, Moomoo rows)
+- `focus/tools/measure-start.sh` click-to-picture timings from logcat (navigates Moomoo rows: prefer deep-linking tennis videos instead, see step 4)
 - `.github/workflows/nightly-sync.yml` 03:00 UTC: merge upstream, build, sign, publish release `latest`
 
 ## Build, release, device
