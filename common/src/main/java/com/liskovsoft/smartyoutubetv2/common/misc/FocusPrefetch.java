@@ -9,18 +9,22 @@ import com.liskovsoft.sharedutils.mylogger.Log;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.reactivex.Observable;
 
 final class FocusPrefetch {
     private static final String TAG = FocusPrefetch.class.getSimpleName();
     private static final long MAX_AGE_MS = 60 * 1_000;
+    private static final long PREFETCH_MAX_AGE_MS = 3 * 60 * 1_000;
     private static final int[] UNCACHED_SECTIONS = {
             MediaGroup.TYPE_HISTORY,
             MediaGroup.TYPE_NOTIFICATIONS,
             MediaGroup.TYPE_SETTINGS,
             MediaGroup.TYPE_PLAYBACK_QUEUE,
-            MediaGroup.TYPE_BLOCKED_CHANNELS
+            MediaGroup.TYPE_BLOCKED_CHANNELS,
+            MediaGroup.TYPE_CHANNEL_UPLOADS,
+            MediaGroup.TYPE_USER_PLAYLISTS
     };
     private static final Map<Integer, Entry<MediaGroup>> sGrids = new HashMap<>();
     private static final Map<Integer, Entry<List<MediaGroup>>> sRows = new HashMap<>();
@@ -83,6 +87,14 @@ final class FocusPrefetch {
         return null;
     }
 
+    private static boolean isEmpty(Object value) {
+        if (value instanceof List) {
+            return ((List<?>) value).isEmpty();
+        }
+
+        return value instanceof MediaGroup && ((MediaGroup) value).isEmpty();
+    }
+
     private static boolean isCached(int sectionId) {
         for (int id : UNCACHED_SECTIONS) {
             if (id == sectionId) {
@@ -114,6 +126,7 @@ final class FocusPrefetch {
         private Observable<T> mCached;
         private Object mToken;
         private long mStartedMs;
+        private long mMaxAgeMs = MAX_AGE_MS;
 
         Entry(String name) {
             mName = name;
@@ -132,7 +145,7 @@ final class FocusPrefetch {
             }
 
             long startedMs = System.currentTimeMillis();
-            take().take(1).subscribe(
+            take(PREFETCH_MAX_AGE_MS).take(1).subscribe(
                     value -> {
                         Log.d(TAG, "dewidebug prefetch %s ready after %s ms", mName, System.currentTimeMillis() - startedMs);
                         if (onFirst != null) {
@@ -151,24 +164,42 @@ final class FocusPrefetch {
             mToken = null;
         }
 
-        private synchronized void invalidateIfToken(Object token, Throwable error) {
+        private synchronized void invalidateIfToken(Object token, String reason) {
             if (mToken == token) {
-                invalidate("load failed: " + error.getMessage());
+                invalidate(reason);
             }
         }
 
         private synchronized Observable<T> take() {
+            return take(MAX_AGE_MS);
+        }
+
+        private synchronized Observable<T> take(long freshMaxAgeMs) {
             long ageMs = System.currentTimeMillis() - mStartedMs;
 
-            if (mCached != null && ageMs < MAX_AGE_MS) {
+            if (mCached != null && ageMs < mMaxAgeMs) {
                 Log.d(TAG, "dewidebug %s served from cache (%s ms old)", mName, ageMs);
                 return mCached;
             }
 
             Object token = new Object();
+            AtomicBoolean gotContent = new AtomicBoolean();
             mToken = token;
             mStartedMs = System.currentTimeMillis();
-            mCached = mSource.doOnError(error -> invalidateIfToken(token, error)).cache();
+            mMaxAgeMs = freshMaxAgeMs;
+            mCached = mSource
+                    .doOnNext(value -> {
+                        if (!isEmpty(value)) {
+                            gotContent.set(true);
+                        }
+                    })
+                    .doOnError(error -> invalidateIfToken(token, "load failed: " + error.getMessage()))
+                    .doOnComplete(() -> {
+                        if (!gotContent.get()) {
+                            invalidateIfToken(token, "load returned nothing");
+                        }
+                    })
+                    .cache();
             Log.d(TAG, "dewidebug %s fetching fresh", mName);
             return mCached;
         }

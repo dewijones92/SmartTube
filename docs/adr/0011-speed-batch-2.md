@@ -15,12 +15,16 @@ All Focus-flavour only.
   `FocusSpeed` tracks the app's activities (lifecycle callbacks) and, when AFR switches mode
   (`AutoFrameRateController.onModeStart`), sets the same mode id on every other screen, including ones started
   later. Upstream's `ModeSyncManager` was meant for this but is never fed (`save(null)` only).
+  While a sticky mode is active, `AutoFrameRateController.onInit` no longer re-captures the "original" mode
+  (it would capture the previous video's rate), so restoring for Shorts/AFR-off still returns to the true base.
 - **Section cache.** `FocusPrefetch` now wraps every grid/row section except History, Notifications, Settings,
-  Playback queue and Blocked channels: a loaded section is reused for 60 s instead of refetched on every focus.
-  Discarded on error, on data-source replacement (account change), on "No" (Shorts mask), and on
-  `BrowsePresenter.refresh` ("Refresh section", 3-hour Home refresh).
+  Playback queue, Blocked channels, Channels and Playlists: a loaded section is reused for 60 s (3 min for the
+  launch prefetch) instead of refetched on every focus. Discarded on error, on an empty result, on data-source
+  replacement (account change), on "No" (Shorts mask), and on `BrowsePresenter.refresh` ("Refresh section",
+  3-hour Home refresh).
 - **Next episode preload (Moomoo).** `SuggestionsController.onTickle` (once a minute) calls
-  `Moomoo.preloadNextIfNeeded`: with under 2 minutes left in a Moomoo video, the next one's video info is fetched.
+  `Moomoo.preloadNextIfNeeded`: with under 2 minutes left in a Moomoo video that isn't last in its row, the next
+  one's video info is fetched (the next video is only looked up once those checks pass).
 
 ## Consequences
 - Coming back to the app from the launcher may switch the TV to the last video's rate (sticky until the process

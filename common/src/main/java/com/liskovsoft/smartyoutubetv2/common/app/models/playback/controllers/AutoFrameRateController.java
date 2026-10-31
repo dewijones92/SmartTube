@@ -57,7 +57,9 @@ public class AutoFrameRateController extends BasePlayerController implements Aut
 
     @Override
     public void onInit() {
-        mAutoFrameRateHelper.saveOriginalState(getActivity());
+        if (!FocusSpeed.isStickyModeActive()) {
+            mAutoFrameRateHelper.saveOriginalState(getActivity());
+        }
         mStateController = getController(VideoStateController.class);
         mHQDialogController = getController(HQDialogController.class);
     }

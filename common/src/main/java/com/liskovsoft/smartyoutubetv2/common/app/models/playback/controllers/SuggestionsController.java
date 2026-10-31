@@ -149,7 +149,7 @@ public class SuggestionsController extends BasePlayerController {
     @Override
     public void onTickle() {
         updateLiveDescription();
-        Moomoo.preloadNextIfNeeded(getContext(), getPlayer(), getVideo(), getNext());
+        Moomoo.preloadNextIfNeeded(getContext(), getPlayer(), getVideo(), this::getNext);
     }
 
     private void updateLiveDescription() {

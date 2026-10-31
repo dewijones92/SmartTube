@@ -33,7 +33,7 @@ public final class Moomoo {
     };
     private static final long PRELOAD_BEFORE_END_MS = 120_000;
     private static boolean sRegistered;
-    private static String sPreloadedVideoId;
+    private static String sPreloadedKey;
     private static Video sSectionItem;
 
     private Moomoo() {
@@ -78,6 +78,12 @@ public final class Moomoo {
         return group != null && group.getSection() != null && group.getSection().getId() == SECTION_ID;
     }
 
+    private static boolean hasNextInRow(Video video) {
+        VideoGroup group = video.getGroup();
+        int index = group.indexOf(video);
+        return index >= 0 && index < group.getSize() - 1;
+    }
+
     public static int playbackMode(Video video, int storedMode) {
         if (!isMoomooVideo(video)) {
             return storedMode;
@@ -91,18 +97,29 @@ public final class Moomoo {
         return hasNext ? PlayerConstants.PLAYBACK_MODE_ALL : PlayerConstants.PLAYBACK_MODE_PAUSE;
     }
 
-    public static void preloadNextIfNeeded(Context context, PlayerEngine player, Video video, Video next) {
-        if (player == null || next == null || next.videoId == null || !isMoomooVideo(video)) {
+    public interface NextVideo {
+        Video get();
+    }
+
+    public static void preloadNextIfNeeded(Context context, PlayerEngine player, Video video, NextVideo nextVideo) {
+        if (player == null || !isMoomooVideo(video) || !hasNextInRow(video)) {
             return;
         }
 
         long remainingMs = player.getDurationMs() - player.getPositionMs();
 
-        if (remainingMs <= 0 || remainingMs > PRELOAD_BEFORE_END_MS || next.videoId.equals(sPreloadedVideoId)) {
+        if (remainingMs <= 0 || remainingMs > PRELOAD_BEFORE_END_MS) {
             return;
         }
 
-        sPreloadedVideoId = next.videoId;
+        Video next = nextVideo.get();
+        String key = next != null && next.videoId != null ? video.videoId + ">" + next.videoId : null;
+
+        if (key == null || key.equals(sPreloadedKey)) {
+            return;
+        }
+
+        sPreloadedKey = key;
         Log.d(TAG, "dewidebug Moomoo preloading next episode %s, %s ms before the end", next.videoId, remainingMs);
         FocusSpeed.prefetchFormatInfo(context, next);
     }

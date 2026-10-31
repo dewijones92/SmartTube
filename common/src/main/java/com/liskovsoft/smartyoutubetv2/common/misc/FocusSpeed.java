@@ -61,6 +61,10 @@ public final class FocusSpeed {
         return !isEnabled(context);
     }
 
+    public static synchronized boolean isStickyModeActive() {
+        return sStickyModeId > 0;
+    }
+
     public static synchronized void onAfrModeApplied(Context context, int modeId) {
         if (!isEnabled(context) || Build.VERSION.SDK_INT < 23) {
             return;
