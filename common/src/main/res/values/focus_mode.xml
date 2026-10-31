@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="focus_mode_available">false</bool>
+    <string name="focus_mode_title" translatable="false">Distraction-free mode?</string>
+    <string name="focus_mode_yes" translatable="false">Yes, distraction-free</string>
+    <string name="focus_mode_no" translatable="false">No, full SmartTube</string>
+</resources>

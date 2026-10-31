@@ -20,6 +20,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.presenters.dialogs.BootDialogPr
 import com.liskovsoft.smartyoutubetv2.common.app.views.BrowseView;
 import com.liskovsoft.smartyoutubetv2.common.app.views.SplashView;
 import com.liskovsoft.smartyoutubetv2.common.app.views.ViewManager;
+import com.liskovsoft.smartyoutubetv2.common.misc.FocusMode;
 import com.liskovsoft.smartyoutubetv2.common.misc.GDriveBackupWorker;
 import com.liskovsoft.smartyoutubetv2.common.misc.LocalDriveBackupWorker;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
@@ -111,6 +112,7 @@ public class SplashPresenter extends BasePresenter<SplashView> {
         checkMasterPassword(() -> applyNewIntent(getView().getNewIntent()));
 
         showAccountSelectionIfNeeded(); // should be placed after Intent chain
+        FocusMode.onAppLaunch(getContext(), getView().getNewIntent());
         checkAccountPassword();
     }
 

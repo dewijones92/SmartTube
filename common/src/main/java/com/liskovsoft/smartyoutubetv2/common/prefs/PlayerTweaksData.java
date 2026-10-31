@@ -6,6 +6,7 @@ import android.os.Build.VERSION;
 
 import com.liskovsoft.sharedutils.helpers.Helpers;
 import com.liskovsoft.sharedutils.prefs.GlobalPreferences;
+import com.liskovsoft.smartyoutubetv2.common.misc.FocusMode;
 import com.liskovsoft.smartyoutubetv2.common.prefs.AppPrefs.ProfileChangeListener;
 import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
 import com.liskovsoft.youtubeapi.service.internal.MediaServiceData;
@@ -334,7 +335,7 @@ public class PlayerTweaksData implements ProfileChangeListener {
     }
 
     public boolean isSuggestionsDisabled() {
-        return mIsSuggestionsDisabled;
+        return FocusMode.suggestionsDisabled(mIsSuggestionsDisabled);
     }
 
     public void setSuggestionsDisabled(boolean disable) {

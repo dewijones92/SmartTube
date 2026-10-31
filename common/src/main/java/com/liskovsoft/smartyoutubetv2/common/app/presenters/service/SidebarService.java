@@ -7,6 +7,7 @@ import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import com.liskovsoft.sharedutils.helpers.Helpers;
 import com.liskovsoft.smartyoutubetv2.common.R;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
+import com.liskovsoft.smartyoutubetv2.common.misc.FocusMode;
 import com.liskovsoft.smartyoutubetv2.common.prefs.AppPrefs;
 import com.liskovsoft.smartyoutubetv2.common.prefs.AppPrefs.ProfileChangeListener;
 import com.liskovsoft.smartyoutubetv2.common.prefs.GeneralData;
@@ -45,7 +46,7 @@ public class SidebarService implements ProfileChangeListener {
     }
 
     public Collection<Video> getPinnedItems() {
-        return Collections.unmodifiableList(mPinnedItems);
+        return Collections.unmodifiableList(FocusMode.filterSections(mPinnedItems));
     }
 
     public int addPinnedItem(Video item) {
@@ -214,7 +215,7 @@ public class SidebarService implements ProfileChangeListener {
     }
 
     public int getBootSectionId() {
-        return mBootSectionId;
+        return FocusMode.bootSectionId(mBootSectionId);
     }
 
     public void enableSettingsSection(boolean enabled) {

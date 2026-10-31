@@ -167,6 +167,14 @@ android {
             applicationId "org.smarttube.stable"
             targetSdkVersion project.properties.compileSdkVersion
         }
+        stfocus {
+            applicationId "org.smarttube.focus"
+            targetSdkVersion project.properties.compileSdkVersion
+            matchingFallbacks = ['stbeta']
+            def focusBuild = (project.findProperty('focusBuild') ?: '0').toString().toInteger()
+            versionCode android.defaultConfig.versionCode * 1000 + focusBuild
+            versionNameSuffix "-focus.${focusBuild}"
+        }
         stfdroid {
             applicationId "app.smarttube.fdroid"
             minSdkVersion 21

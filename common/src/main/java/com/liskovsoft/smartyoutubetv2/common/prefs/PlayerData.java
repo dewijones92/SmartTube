@@ -18,6 +18,7 @@ import com.liskovsoft.smartyoutubetv2.common.exoplayer.other.SubtitleManager.Sub
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.ExoFormatItem;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.FormatItem;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.track.MediaTrack;
+import com.liskovsoft.smartyoutubetv2.common.misc.FocusMode;
 import com.liskovsoft.smartyoutubetv2.common.prefs.AppPrefs.ProfileChangeListener;
 import com.liskovsoft.smartyoutubetv2.common.prefs.common.DataChangeBase;
 import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
@@ -258,7 +259,7 @@ public class PlayerData extends DataChangeBase implements PlayerConstants, Profi
     }
 
     public int getPlaybackMode() {
-        return mPlaybackMode;
+        return FocusMode.playbackMode(mPlaybackMode);
     }
 
     public boolean isAllSpeedEnabled() {

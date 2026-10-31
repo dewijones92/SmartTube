@@ -1,0 +1,190 @@
+name: Nightly upstream sync (SmartTube Focus)
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: 'Build and publish even if upstream has nothing new'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: nightly-sync-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  UPSTREAM: https://github.com/yuliskov/SmartTube.git
+  CONFLICT_TITLE: 'Nightly upstream merge conflict'
+  APK_DIR: smarttubetv/build/outputs/apk/stfocus/release
+  PUBLISH: ${{ github.ref == 'refs/heads/master' }}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+
+      - name: Merge upstream
+        id: merge
+        env:
+          FORCE_BUILD: ${{ inputs.force_build }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git remote add upstream "$UPSTREAM"
+          git fetch --no-tags upstream master
+
+          BEFORE=$(git rev-parse HEAD)
+          BEHIND=$(git rev-list --count HEAD..upstream/master)
+          echo "before=$BEFORE" >> "$GITHUB_OUTPUT"
+          echo "ref=${GITHUB_REF} head=${BEFORE} behind_upstream=${BEHIND} force_build=${FORCE_BUILD}"
+
+          if [ "$BEHIND" = "0" ] && [ "$FORCE_BUILD" != "true" ]; then
+            echo "Upstream has nothing new; no build, no release."
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$BEHIND" != "0" ]; then
+            git log --no-color --format='%h %s' HEAD..upstream/master | head -20 > upstream-changes.txt
+            echo "Merging upstream commits:"; cat upstream-changes.txt
+            if ! git merge --no-edit upstream/master; then
+              git diff --name-only --diff-filter=U > conflicted-files.txt
+              echo "Merge conflict in:"; cat conflicted-files.txt
+              git merge --abort
+              echo "conflict=true" >> "$GITHUB_OUTPUT"
+              echo "build=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          else
+            echo "forced rebuild of $(git rev-parse --short HEAD)" > upstream-changes.txt
+          fi
+
+          echo "merged=$([ "$BEHIND" != "0" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "build=true" >> "$GITHUB_OUTPUT"
+
+      - name: Report conflict as an issue
+        if: steps.merge.outputs.conflict == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          {
+            echo "The nightly merge of yuliskov/SmartTube \`master\` into \`${GITHUB_REF_NAME}\` stopped on a conflict."
+            echo
+            echo "The TV keeps the last good build. Conflicting files:"
+            echo
+            sed 's/^/- `/; s/$/`/' conflicted-files.txt
+            echo
+            echo "Run: ${RUN_URL}"
+          } > issue-body.md
+          EXISTING=$(gh issue list --state open --search "\"${CONFLICT_TITLE}\" in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            echo "Commenting on existing issue #${EXISTING}"
+            gh issue comment "$EXISTING" --body-file issue-body.md
+          else
+            echo "Opening a new issue"
+            gh issue create --title "$CONFLICT_TITLE" --body-file issue-body.md
+          fi
+          exit 1
+
+      - name: Checkout submodules
+        if: steps.merge.outputs.build == 'true'
+        run: git submodule update --init --recursive
+
+      - name: Set up JDK 17
+        if: steps.merge.outputs.build == 'true'
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Configure signing
+        if: steps.merge.outputs.build == 'true'
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          ALIAS: ${{ secrets.ALIAS }}
+        run: |
+          if [ -z "$SIGNING_KEY" ]; then echo "SIGNING_KEY secret missing"; exit 1; fi
+          echo "$SIGNING_KEY" | base64 --decode > "$RUNNER_TEMP/key.jks"
+          {
+            echo "storePassword=$KEY_STORE_PASSWORD"
+            echo "keyAlias=$ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+            echo "storeFile=$RUNNER_TEMP/key.jks"
+          } > keystore.properties
+
+      - name: Build
+        if: steps.merge.outputs.build == 'true'
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleStfocusRelease -PfocusBuild=${{ github.run_number }}
+          ls -la "$APK_DIR"
+
+      - name: Prepare release files
+        if: steps.merge.outputs.build == 'true'
+        id: files
+        run: |
+          META="$APK_DIR/output-metadata.json"
+          VERSION_CODE=$(jq -r '[.elements[].versionCode] | max' "$META")
+          VERSION_NAME=$(jq -r '.elements[0].versionName' "$META")
+          echo "versionCode=${VERSION_CODE} versionName=${VERSION_NAME}"
+          mkdir -p release
+          for ABI in armeabi-v7a arm64-v8a x86; do
+            cp "$APK_DIR"/SmartTube_focus_*_"$ABI".apk "release/smarttube_focus_${ABI}.apk"
+          done
+          BASE="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/latest"
+          jq -n \
+            --arg base "$BASE" --arg name "$VERSION_NAME" --argjson code "$VERSION_CODE" \
+            --rawfile changes upstream-changes.txt \
+            '{
+              package: {
+                downloadUrlList: [($base + "/smarttube_focus_armeabi-v7a.apk")],
+                "downloadUrlList_arm64-v8a": [($base + "/smarttube_focus_arm64-v8a.apk")],
+                downloadUrlList_x86: [($base + "/smarttube_focus_x86.apk")]
+              },
+              ($name): {
+                versionCode: $code,
+                changelog: ($changes | split("\n") | map(select(length > 0)) | .[0:10])
+              }
+            }' > release/smarttube_focus.json
+          cat release/smarttube_focus.json
+          echo "versionName=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
+          echo "versionCode=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload build artifact
+        if: steps.merge.outputs.build == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: smarttube-focus-${{ steps.files.outputs.versionName }}
+          path: release/
+
+      - name: Push merge
+        if: steps.merge.outputs.merged == 'true' && env.PUBLISH == 'true'
+        run: git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Publish release
+        if: steps.merge.outputs.build == 'true' && env.PUBLISH == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION_NAME: ${{ steps.files.outputs.versionName }}
+        run: |
+          SHA=$(git rev-parse HEAD)
+          gh release create "focus-${VERSION_NAME}" release/* --target "$SHA" \
+            --title "SmartTube Focus ${VERSION_NAME}" --notes-file upstream-changes.txt
+          gh release delete latest --cleanup-tag --yes || echo "no previous latest release"
+          gh release create latest release/* --target "$SHA" --latest \
+            --title "SmartTube Focus (latest: ${VERSION_NAME})" --notes-file upstream-changes.txt
+          echo "Published ${VERSION_NAME} at ${SHA}"

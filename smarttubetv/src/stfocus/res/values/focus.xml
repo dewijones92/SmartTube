@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="focus_mode_available">true</bool>
+
+    <string-array name="update_urls">
+        <item>https://github.com/dewijones92/SmartTube/releases/download/latest/smarttube_focus.json</item>
+    </string-array>
+
+    <color name="red">#19C79A</color>
+    <color name="semi_red">#10A37F</color>
+    <color name="light_red">#7FDCC4</color>
+    <color name="dark_red">#0B6E57</color>
+</resources>
