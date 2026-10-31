@@ -13,7 +13,14 @@
   upstream's 10 s `APP_INIT_DELAY_MS`.
 - **No AFR overlay wait.** `DisplaySyncHelper` passes `allowOverlayDisplay = false` (both the switch and the restore on exit), so `UhdHelper` no longer waits
   ~2 s for an Amazon interstitial broadcast that never arrives on this device before switching to a 4K mode.
-- Device setting: AFR pause trimmed to fit the shorter switch (measured on the TV).
+- Device setting: AFR pause 4.0 s -> 3.0 s.
+
+## Measured on the TV (Fire TV Stick 4K Max, 31 Oct 2026, click -> AFR switch complete)
+| | before (.8) | after (.9) |
+|---|---|---|
+| cold first video | +8.5 s | +7.5 s (PO-token WebView dominates: decoder at +6.1 s) |
+| warm video | +6.0 s | +2.2 / +3.5 / +3.1 s (3 runs) |
+Picture follows after the AFR pause (now 3 s). Next target: mint the PO token during the launch prompt.
 
 ## Consequences
 - One extra format request when the player's request misses the cache: live/upcoming streams, a player-JS warm-up
