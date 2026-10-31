@@ -102,11 +102,18 @@ public final class Moomoo {
     }
 
     public static void preloadNextIfNeeded(Context context, PlayerEngine player, Video video, NextVideo nextVideo) {
-        if (player == null || !isMoomooVideo(video) || !hasNextInRow(video)) {
+        if (player == null || !isMoomooVideo(video) || !hasNextInRow(video) || !player.containsMedia()) {
             return;
         }
 
-        long remainingMs = player.getDurationMs() - player.getPositionMs();
+        long remainingMs;
+
+        try {
+            remainingMs = player.getDurationMs() - player.getPositionMs();
+        } catch (RuntimeException e) {
+            Log.e(TAG, "dewidebug Moomoo preload skipped: player not ready (%s)", e.toString());
+            return;
+        }
 
         if (remainingMs <= 0 || remainingMs > PRELOAD_BEFORE_END_MS) {
             return;
