@@ -401,7 +401,7 @@ public class DisplaySyncHelper implements UhdHelperListener {
 
             // Rate boundaries slightly increased to perfect compare between two floats
             boolean skipFps = mIsSkip24RateEnabled && videoFramerate >= 23.96 && videoFramerate <= 24.98 && currentMode != null;
-            Mode closerMode = findCloserMode(resultModes, skipFps ? currentMode.getRefreshRate() : videoFramerate);
+            Mode closerMode = findCloserMode(resultModes, skipFps ? FocusSpeed.baseMode(currentMode, mOriginalMode).getRefreshRate() : videoFramerate);
 
             if (closerMode == null) {
                 String msg = "Could not find closer refresh rate for " + videoFramerate + "fps";
@@ -455,6 +455,10 @@ public class DisplaySyncHelper implements UhdHelperListener {
         return mUhdHelper;
     }
 
+    public boolean hasOriginalState() {
+        return mOriginalMode != null;
+    }
+
     public void saveOriginalState() {
         saveState(STATE_ORIGINAL);
     }
@@ -503,6 +507,7 @@ public class DisplaySyncHelper implements UhdHelperListener {
 
         if (!force && modeTmp.equals(mode)) {
             Log.d(TAG, "Do not need to restore mode. Current mode is the same as new.");
+            FocusSpeed.onAfrModeApplied(mContext, modeTmp.getModeId());
             return false;
         }
 

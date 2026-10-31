@@ -57,7 +57,7 @@ public class AutoFrameRateController extends BasePlayerController implements Aut
 
     @Override
     public void onInit() {
-        if (!FocusSpeed.isStickyModeActive()) {
+        if (!FocusSpeed.isStickyModeActive() || !mAutoFrameRateHelper.hasOriginalState()) {
             mAutoFrameRateHelper.saveOriginalState(getActivity());
         }
         mStateController = getController(VideoStateController.class);
