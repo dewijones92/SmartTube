@@ -32,3 +32,16 @@ All Focus-flavour only.
 - Lists can be up to 60 s stale; an item removed via a menu action can reappear within that minute.
 - The single-entry format cache means a preload evicts the current video's entry; a re-request of the current
   video (error recovery) refetches it.
+
+## Measured on the TV (31 Oct 2026, click -> marker; AFR pause 3 s)
+| Case | batch 1 (.9) | batch 2 |
+|---|---|---|
+| Cold first video: decoder start | +6.1 s | **+2.7 s** (PO token minted during the prompt) |
+| Cold first video: AFR switch done | +7.5 s | **+3.4 s** |
+| Leaving the player | TV back to 60 Hz | **stays at 50 Hz** (6 s watched) |
+| Next video at the same rate | switch + 3 s hold | **no switch**: first frame +1.7 s / +3.4 s |
+| Next video at a different rate | switch done ~+2.2–3.5 s | switch done +2.8 s |
+| Hopping back to a section within 60 s | spinner + refetch | **drawn 0.4 s after focus**, no spinner |
+
+The TV test also caught a crash the two code reviews missed (preload asking for duration before the player had
+media); fixed in bc3381a1.
