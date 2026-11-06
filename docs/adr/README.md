@@ -9,7 +9,7 @@ open to challenge.
 |---|---|---|
 | [0001](0001-record-decisions.md) | Record decisions as ADRs | Accepted |
 | [0002](0002-separate-focus-app.md) | Ship as a separate app, `org.smarttube.focus` | Accepted |
-| [0003](0003-launch-prompt-runtime-overlay.md) | Launch prompt; focus mode is a runtime overlay | Accepted |
+| [0003](0003-launch-prompt-runtime-overlay.md) | Launch prompt; focus mode is a runtime overlay | Accepted; boot section superseded by 0013 |
 | [0004](0004-nightly-upstream-sync.md) | Nightly upstream merge, publish, in-app updater | Accepted |
 | [0005](0005-branding-jade.md) | Jade branding everywhere | Accepted |
 | [0006](0006-signing-and-versioning.md) | Own signing key; versionCode scheme | Accepted |
@@ -17,5 +17,6 @@ open to challenge.
 | [0008](0008-moomoo-section.md) | Moomoo kids' section | Accepted |
 | [0009](0009-instant-prompt-and-afr-restart.md) | Instant start after the prompt; restart after frame-rate switch | Accepted |
 | [0010](0010-speed-batch-1.md) | Speed batch 1: earlier format fetch, warm engine, no AFR overlay wait | Accepted |
-| [0012](0012-batch3-tennis-kids-bedtime.md) | Tennis, Kids mode, bedtime, more Moomoo, Continue watching | Accepted |
 | [0011](0011-speed-batch-2.md) | Speed batch 2: warm PO token, sticky refresh rate, section cache, next-episode preload | Accepted |
+| [0012](0012-batch3-tennis-kids-bedtime.md) | Tennis, Kids mode, bedtime, more Moomoo, Continue watching | Accepted |
+| [0013](0013-hidden-prefetch-search-first.md) | Hidden prefetch behind the prompt; distraction-free opens a plain search page | Accepted |

@@ -14,7 +14,7 @@ mode is on by default before the user answers, so Back or a replaced dialog stil
 One-line hooks read the flag instead of rewriting settings:
 - `SidebarService.getPinnedItems` filters out Home, Recommended, Shorts, Trending, Kids, Sports, Live,
   Gaming, News, Music, Movies.
-- `SidebarService.getBootSectionId` returns Subscriptions.
+- `SidebarService.getBootSectionId` returns Subscriptions. *Superseded by [ADR 0013](0013-hidden-prefetch-search-first.md): Channels, with Yes opening the search page.*
 - `PlayerTweaksData.isSuggestionsDisabled` returns true.
 - `PlayerData.getPlaybackMode` returns `PLAYBACK_MODE_LIST` (play only explicit playlists) —
   *Claude, not separately asked*; Dewi's original beta setting was "stop after one video".

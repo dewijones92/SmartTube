@@ -18,3 +18,4 @@ Verdicts: **Yes** (worth offering), **Maybe** (needs generalising first), **No**
 | Continue watching (History filtered to part-watched) | 0012 | **Maybe** | Small and general; would need to be a normal section toggle upstream. |
 | Moomoo kids' section with fixed channels | 0008 | **No** | Hard-coded to our family's channels. A generic "pin a channel's Popular videos as a section" might be Maybe. |
 | Separate flavour, jade branding, nightly sync, own update URL | 0002, 0004–0006 | **No** | Fork plumbing. |
+| Plain search page (empty box shows only your own saved searches) and a solid background behind the launch prompt | 0013 | **No** | Built on the launch prompt and focus mode. A generic "hide popular searches on an empty box" toggle might be Maybe; upstream has a commented-out "popular searches" setting already. |
