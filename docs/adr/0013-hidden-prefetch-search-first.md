@@ -18,8 +18,11 @@ saved searches (`SearchTagStorage`, 50 most recent) only when YouTube returns no
 ## Decision
 - **Hidden prefetch.** While the prompt is up (`FocusMode.sPromptShowing`), `AppDialogActivity.onResume` calls
   `FocusMode.applyPromptBackground`, which gives the dialog window a solid black background. The window stays
-  translucent, so the browse screen underneath keeps loading; `FocusPrefetch` is unchanged.
-- **Yes** closes the prompt and opens the search page (`SearchPresenter.startSearch(null)`).
+  translucent, so the browse screen underneath keeps loading; `FocusPrefetch` is unchanged. The flag is cleared when
+  the prompt closes, and also from `AppDialogActivity.onDestroy`, because a system destroy drops the close callback
+  without running it and a stuck flag would turn every later dialog black.
+- **Yes** closes the prompt and opens the search page (`SearchPresenter.startSearch(null)`). With SmartTube's
+  "Instant voice search" setting on, that opens voice search instead of the keyboard, as upstream does.
 - **Behind the search page** the start section is Channels (`bootSectionId` returns `TYPE_CHANNEL_UPLOADS` in focus
   mode), so Back from search shows Channels, not Subscriptions. *Claude, not separately asked.*
 - **Plain search.** In focus mode (Kids included), an empty box shows only the user's own saved searches, never
@@ -32,6 +35,10 @@ saved searches (`SearchTagStorage`, 50 most recent) only when YouTube returns no
   silent in release builds; every choice and landing is a `dewidebug` line in logcat.
 
 ## Consequences
-- No and Kids are unchanged: Home and Moomoo, instantly from the prefetch.
-- The first Subscriptions visit within 3 minutes is still served from the prefetch.
+- No and Kids behave as before: No discards the prefetch (its Shorts setting changes) and loads Home; Kids loads
+  Moomoo, which was never prefetched.
+- The Subscriptions prefetch no longer feeds the landing screen. It is kept because its first video's format fetch
+  warms the PO token (ADR 0011), which the first playback from search also needs, and a Subscriptions visit within
+  3 minutes is served from it.
+- Channels, behind the search page, is fetched fresh at launch (it is uncached, like History).
 - An update pop-up that replaces the prompt also gets the black background until it closes.

@@ -9,6 +9,7 @@ import android.text.TextUtils;
 import android.view.Window;
 
 import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
+import com.liskovsoft.sharedutils.prefs.GlobalPreferences;
 import com.liskovsoft.smartyoutubetv2.common.R;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.BrowseSection;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
@@ -89,7 +90,6 @@ public final class FocusMode {
         }
 
         FocusLog.d(TAG, "dewidebug app launch: defaulting to focus mode and showing prompt on a plain background");
-        sPromptShowing = true;
         sChoice = null;
         BrowsePresenter.instance(context);
         setKids(context, false);
@@ -120,6 +120,7 @@ public final class FocusMode {
             FocusLog.d(TAG, "dewidebug landing: Moomoo (user chose Kids)");
             BrowsePresenter.instance(context).selectSection(Moomoo.SECTION_ID);
         }));
+        sPromptShowing = true;
         dialog.showDialog(context.getString(R.string.focus_mode_title), () -> {
             sPromptShowing = false;
             if (sChoice == null) {
@@ -141,6 +142,13 @@ public final class FocusMode {
         }
     }
 
+    public static void onDialogDestroyed() {
+        if (sPromptShowing) {
+            sPromptShowing = false;
+            FocusLog.d(TAG, "dewidebug prompt destroyed without closing (system destroy): later dialogs keep their normal background");
+        }
+    }
+
     public static boolean plainSearchTags(String query, SearchTagsProvider.ResultsCallback callback) {
         if (!sActive || !TextUtils.isEmpty(query)) {
             return false;
@@ -149,8 +157,8 @@ public final class FocusMode {
         List<String> own = null;
 
         try {
-            own = SearchTagStorage.getTags();
-        } catch (RuntimeException e) {
+            own = GlobalPreferences.sInstance != null ? SearchTagStorage.getTags() : null;
+        } catch (RuntimeException | ExceptionInInitializerError e) {
             FocusLog.e(TAG, "dewidebug plain search: reading saved searches failed: %s", e.getMessage());
         }
 

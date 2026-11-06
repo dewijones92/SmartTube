@@ -44,6 +44,12 @@ public class AppDialogActivity extends MotherActivity {
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        FocusMode.onDialogDestroyed();
+    }
+
+    @Override
     protected void initTheme() {
         int settingsThemeResId = MainUIData.instance(this).getColorScheme().settingsThemeResId;
         if (settingsThemeResId > 0) {

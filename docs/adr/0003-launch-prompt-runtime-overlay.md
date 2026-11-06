@@ -25,6 +25,6 @@ One-line hooks read the flag instead of rewriting settings:
 - "No" is simply the stored settings; nothing needs undoing.
 - If the update pop-up (10 s after launch) arrives before the prompt is answered, it replaces the prompt
   and the session stays in focus mode.
-- Choosing No keeps the current section (Subscriptions) rather than jumping to Home.
+- Choosing No keeps the current section (Subscriptions) rather than jumping to Home. *Corrected: since [ADR 0009](0009-instant-prompt-and-afr-restart.md) No jumps to Home.*
 - The launch intent must be read at the start of `runPerViewTasks`: after `applyNewIntent` the splash
   view is gone (this crashed build .1).
