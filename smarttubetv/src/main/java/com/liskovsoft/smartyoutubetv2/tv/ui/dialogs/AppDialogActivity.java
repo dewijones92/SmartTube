@@ -13,6 +13,7 @@ import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.views.PlaybackView;
 import com.liskovsoft.smartyoutubetv2.common.app.views.ViewManager;
+import com.liskovsoft.smartyoutubetv2.common.misc.FocusMode;
 import com.liskovsoft.smartyoutubetv2.common.misc.GlobalKeyTranslator;
 import com.liskovsoft.smartyoutubetv2.common.misc.PlayerKeyTranslator;
 import com.liskovsoft.smartyoutubetv2.common.prefs.MainUIData;
@@ -34,6 +35,12 @@ public class AppDialogActivity extends MotherActivity {
 
         mGlobalKeyTranslator = new PlayerKeyTranslator(this);
         mGlobalKeyTranslator.apply();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        FocusMode.applyPromptBackground(getWindow());
     }
 
     @Override

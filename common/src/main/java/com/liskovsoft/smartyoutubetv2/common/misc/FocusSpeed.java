@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.view.Window;
 import android.view.WindowManager;
 
-import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.smartyoutubetv2.common.R;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.youtubeapi.service.YouTubeServiceManager;
@@ -36,7 +35,7 @@ public final class FocusSpeed {
             return;
         }
 
-        Log.d(TAG, "dewidebug warming player engine at launch");
+        FocusLog.d(TAG, "dewidebug warming player engine at launch");
         YouTubeServiceManager.instance().refreshCacheIfNeeded();
         trackActivities(context);
     }
@@ -51,10 +50,10 @@ public final class FocusSpeed {
         }
 
         long startMs = System.currentTimeMillis();
-        Log.d(TAG, "dewidebug format prefetch started: %s", videoId);
+        FocusLog.d(TAG, "dewidebug format prefetch started: %s", videoId);
         YouTubeServiceManager.instance().getMediaItemService().getFormatInfoObserve(videoId).subscribe(
-                info -> Log.d(TAG, "dewidebug format prefetch %s ready after %s ms", videoId, System.currentTimeMillis() - startMs),
-                error -> Log.e(TAG, "dewidebug format prefetch %s failed: %s", videoId, error.getMessage()));
+                info -> FocusLog.d(TAG, "dewidebug format prefetch %s ready after %s ms", videoId, System.currentTimeMillis() - startMs),
+                error -> FocusLog.e(TAG, "dewidebug format prefetch %s failed: %s", videoId, error.getMessage()));
     }
 
     public static boolean allowAfrOverlay(Context context) {
@@ -86,7 +85,7 @@ public final class FocusSpeed {
             }
         }
 
-        Log.d(TAG, "dewidebug AFR mode %s made sticky, applied to %s other screens", modeId, applied);
+        FocusLog.d(TAG, "dewidebug AFR mode %s made sticky, applied to %s other screens", modeId, applied);
     }
 
     private static synchronized void trackActivities(Context context) {
@@ -174,7 +173,7 @@ public final class FocusSpeed {
 
         params.preferredDisplayModeId = sStickyModeId;
         window.setAttributes(params);
-        Log.d(TAG, "dewidebug sticky AFR mode %s set on %s", sStickyModeId, activity.getClass().getSimpleName());
+        FocusLog.d(TAG, "dewidebug sticky AFR mode %s set on %s", sStickyModeId, activity.getClass().getSimpleName());
         return true;
     }
 }

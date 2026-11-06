@@ -3,7 +3,6 @@ package com.liskovsoft.smartyoutubetv2.common.misc;
 import com.liskovsoft.mediaserviceinterfaces.ContentService;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaItem;
-import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.youtubeapi.service.YouTubeServiceManager;
 
 import java.util.ArrayList;
@@ -33,7 +32,7 @@ final class FocusRows {
         try {
             group = content().getChannelSearchObserve(channelId, query).blockingFirst();
         } catch (Exception e) {
-            Log.e(TAG, "dewidebug search '%s' in %s failed: %s", query, channelId, e.getMessage());
+            FocusLog.e(TAG, "dewidebug search '%s' in %s failed: %s", query, channelId, e.getMessage());
         }
 
         add(rows, group, title, channelId);
@@ -42,9 +41,9 @@ final class FocusRows {
     static void add(List<MediaGroup> rows, MediaGroup group, String title, String source) {
         if (group != null && !group.isEmpty()) {
             rows.add(new TitledGroup(group, title, null));
-            Log.d(TAG, "dewidebug row '%s': %s videos", title, group.getMediaItems().size());
+            FocusLog.d(TAG, "dewidebug row '%s': %s videos", title, group.getMediaItems().size());
         } else {
-            Log.e(TAG, "dewidebug row '%s' empty (source %s)", title, source);
+            FocusLog.e(TAG, "dewidebug row '%s' empty (source %s)", title, source);
         }
     }
 
@@ -57,7 +56,7 @@ final class FocusRows {
             List<MediaGroup> chips = content().getChannelSortingOptionsObserve(channelId).blockingFirst();
 
             if (chips == null || chips.isEmpty()) {
-                Log.e(TAG, "dewidebug channel %s: no sort options", channelId);
+                FocusLog.e(TAG, "dewidebug channel %s: no sort options", channelId);
                 return null;
             }
 
@@ -72,12 +71,12 @@ final class FocusRows {
 
             if (chip == null) {
                 chip = chips.size() > fallbackIndex ? chips.get(fallbackIndex) : chips.get(0);
-                Log.d(TAG, "dewidebug channel %s: no chip '%s', using '%s'", channelId, chipTitle, chip != null ? chip.getTitle() : null);
+                FocusLog.d(TAG, "dewidebug channel %s: no chip '%s', using '%s'", channelId, chipTitle, chip != null ? chip.getTitle() : null);
             }
 
             return content().continueGroupObserve(chip).blockingFirst();
         } catch (Exception e) {
-            Log.e(TAG, "dewidebug channel %s failed: %s", channelId, e.getMessage());
+            FocusLog.e(TAG, "dewidebug channel %s failed: %s", channelId, e.getMessage());
             return null;
         }
     }

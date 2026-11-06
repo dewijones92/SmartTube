@@ -4,7 +4,6 @@ import android.content.Context;
 
 import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import com.liskovsoft.sharedutils.helpers.MessageHelpers;
-import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.sharedutils.rx.RxHelper;
 import com.liskovsoft.smartyoutubetv2.common.R;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.BrowseSection;
@@ -52,7 +51,7 @@ public final class Moomoo {
         sections.put(SECTION_ID, new BrowseSection(SECTION_ID, TITLE, BrowseSection.TYPE_ROW, R.drawable.icon_moomoo, false));
         rows.put(SECTION_ID, RxHelper.fromCallable(Moomoo::loadRows));
         sRegistered = true;
-        Log.d(TAG, "dewidebug Moomoo section registered id=%s", SECTION_ID);
+        FocusLog.d(TAG, "dewidebug Moomoo section registered id=%s", SECTION_ID);
     }
 
     public static void insertAfterChannels(List<Video> visible) {
@@ -102,7 +101,7 @@ public final class Moomoo {
         int index = group.indexOf(video);
         boolean hasNext = index >= 0 && index < group.getSize() - 1;
         boolean bedtime = sBedtimeAnnounced;
-        Log.d(TAG, "dewidebug Moomoo playback: index=%s size=%s hasNext=%s bedtime=%s watched=%s ms", index, group.getSize(), hasNext, bedtime, sWatchedMs);
+        FocusLog.d(TAG, "dewidebug Moomoo playback: index=%s size=%s hasNext=%s bedtime=%s watched=%s ms", index, group.getSize(), hasNext, bedtime, sWatchedMs);
 
         return hasNext && !bedtime ? PlayerConstants.PLAYBACK_MODE_ALL : PlayerConstants.PLAYBACK_MODE_PAUSE;
     }
@@ -124,7 +123,7 @@ public final class Moomoo {
         long now = System.currentTimeMillis();
 
         if (sLastWatchTickMs > 0 && now - sLastWatchTickMs > BEDTIME_RESET_MS) {
-            Log.d(TAG, "dewidebug Moomoo bedtime count reset after a break");
+            FocusLog.d(TAG, "dewidebug Moomoo bedtime count reset after a break");
             sWatchedMs = 0;
             sBedtimeAnnounced = false;
         }
@@ -140,13 +139,13 @@ public final class Moomoo {
         boolean overLimit = limitMinutes > 0 && sWatchedMs >= limitMinutes * 60_000L;
 
         if (!overLimit && sBedtimeAnnounced) {
-            Log.d(TAG, "dewidebug Moomoo bedtime lifted: limit now %s min, watched %s ms", limitMinutes, sWatchedMs);
+            FocusLog.d(TAG, "dewidebug Moomoo bedtime lifted: limit now %s min, watched %s ms", limitMinutes, sWatchedMs);
             sBedtimeAnnounced = false;
         }
 
         if (overLimit && !sBedtimeAnnounced) {
             sBedtimeAnnounced = true;
-            Log.d(TAG, "dewidebug Moomoo bedtime reached: watched %s ms, limit %s min", sWatchedMs, limitMinutes);
+            FocusLog.d(TAG, "dewidebug Moomoo bedtime reached: watched %s ms, limit %s min", sWatchedMs, limitMinutes);
             MessageHelpers.showLongMessage(context, "Last one! Bedtime after this episode \uD83C\uDF19");
         }
     }
@@ -161,7 +160,7 @@ public final class Moomoo {
         try {
             remainingMs = player.getDurationMs() - player.getPositionMs();
         } catch (RuntimeException e) {
-            Log.e(TAG, "dewidebug Moomoo preload skipped: player not ready (%s)", e.toString());
+            FocusLog.e(TAG, "dewidebug Moomoo preload skipped: player not ready (%s)", e.toString());
             return;
         }
 
@@ -177,7 +176,7 @@ public final class Moomoo {
         }
 
         sPreloadedKey = key;
-        Log.d(TAG, "dewidebug Moomoo preloading next episode %s, %s ms before the end", next.videoId, remainingMs);
+        FocusLog.d(TAG, "dewidebug Moomoo preloading next episode %s, %s ms before the end", next.videoId, remainingMs);
         FocusSpeed.prefetchFormatInfo(context, next);
     }
 

@@ -3,7 +3,6 @@ package com.liskovsoft.smartyoutubetv2.common.misc;
 import android.content.Context;
 
 import com.liskovsoft.sharedutils.helpers.MessageHelpers;
-import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.smartyoutubetv2.common.R;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerEngine;
 
@@ -22,7 +21,7 @@ public final class AfrRestart {
         }
 
         if (pauseMs <= 0) {
-            Log.d(TAG, "dewidebug AFR switch to %s Hz without a pause setting: not rewinding", refreshRate);
+            FocusLog.d(TAG, "dewidebug AFR switch to %s Hz without a pause setting: not rewinding", refreshRate);
             return;
         }
 
@@ -31,7 +30,7 @@ public final class AfrRestart {
         }
 
         String message = String.format(Locale.UK, "Adjusting TV to %s Hz…", formatRate(refreshRate));
-        Log.d(TAG, "dewidebug AFR switch to %s Hz, start position=%s ms, pause=%s ms", refreshRate, sStartPositionMs, pauseMs);
+        FocusLog.d(TAG, "dewidebug AFR switch to %s Hz, start position=%s ms, pause=%s ms", refreshRate, sStartPositionMs, pauseMs);
         MessageHelpers.showLongMessage(context, message);
     }
 
@@ -43,7 +42,7 @@ public final class AfrRestart {
         long start = sStartPositionMs;
         sStartPositionMs = -1;
         long current = player.getPositionMs();
-        Log.d(TAG, "dewidebug AFR resume: rewinding from %s ms to %s ms, play=%s", current, start, play);
+        FocusLog.d(TAG, "dewidebug AFR resume: rewinding from %s ms to %s ms, play=%s", current, start, play);
         player.setPositionMs(start);
         player.setPlayWhenReady(play);
     }

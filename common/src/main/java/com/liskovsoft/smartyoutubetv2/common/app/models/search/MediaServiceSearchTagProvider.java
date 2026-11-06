@@ -6,6 +6,7 @@ import com.liskovsoft.mediaserviceinterfaces.ContentService;
 import com.liskovsoft.mediaserviceinterfaces.ServiceManager;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.smartyoutubetv2.common.app.models.search.vineyard.Tag;
+import com.liskovsoft.smartyoutubetv2.common.misc.FocusMode;
 import com.liskovsoft.sharedutils.rx.RxHelper;
 import com.liskovsoft.youtubeapi.service.YouTubeServiceManager;
 import io.reactivex.disposables.Disposable;
@@ -28,6 +29,10 @@ public class MediaServiceSearchTagProvider implements SearchTagsProvider {
 
         if (mIgnoreEmptyQuery && TextUtils.isEmpty(query)) {
             callback.onResults(null);
+            return;
+        }
+
+        if (FocusMode.plainSearchTags(query, callback)) {
             return;
         }
 

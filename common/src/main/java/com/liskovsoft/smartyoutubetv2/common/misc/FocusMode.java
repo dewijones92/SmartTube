@@ -3,19 +3,26 @@ package com.liskovsoft.smartyoutubetv2.common.misc;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.text.TextUtils;
+import android.view.Window;
 
 import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
-import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.smartyoutubetv2.common.R;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.BrowseSection;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerConstants;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.UiOptionItem;
+import com.liskovsoft.smartyoutubetv2.common.app.models.search.SearchTagsProvider;
+import com.liskovsoft.smartyoutubetv2.common.app.models.search.vineyard.Tag;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.AppDialogPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.BrowsePresenter;
+import com.liskovsoft.smartyoutubetv2.common.app.presenters.SearchPresenter;
 import com.liskovsoft.smartyoutubetv2.common.prefs.MainUIData;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerTweaksData;
 import com.liskovsoft.smartyoutubetv2.common.utils.IntentExtractor;
+import com.liskovsoft.youtubeapi.search.SearchTagStorage;
 import com.liskovsoft.youtubeapi.service.internal.MediaServiceData;
 
 import java.util.ArrayList;
@@ -43,6 +50,8 @@ public final class FocusMode {
     };
     private static volatile boolean sActive;
     private static volatile boolean sKids;
+    private static volatile boolean sPromptShowing;
+    private static volatile String sChoice;
 
     private FocusMode() {
     }
@@ -63,7 +72,7 @@ public final class FocusMode {
 
     public static void onAppLaunch(Context context, Intent intent) {
         if (context == null) {
-            Log.e(TAG, "dewidebug prompt skipped: no context at app launch");
+            FocusLog.e(TAG, "dewidebug prompt skipped: no context at app launch");
             return;
         }
 
@@ -74,12 +83,14 @@ public final class FocusMode {
         FocusSpeed.warmEngine(context);
 
         if (IntentExtractor.hasData(intent)) {
-            Log.d(TAG, "dewidebug prompt skipped: launched with a link or cast, keeping active=%s", sActive);
+            FocusLog.d(TAG, "dewidebug prompt skipped: launched with a link or cast, keeping active=%s", sActive);
             applyShortsHiding(context, sActive);
             return;
         }
 
-        Log.d(TAG, "dewidebug app launch: defaulting to focus mode and showing prompt");
+        FocusLog.d(TAG, "dewidebug app launch: defaulting to focus mode and showing prompt on a plain background");
+        sPromptShowing = true;
+        sChoice = null;
         BrowsePresenter.instance(context);
         setKids(context, false);
         setActive(context, true, "default before prompt");
@@ -87,23 +98,66 @@ public final class FocusMode {
 
         AppDialogPresenter dialog = AppDialogPresenter.instance(context);
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_yes), option -> {
+            sChoice = "Yes";
             setActive(context, true, "user chose Yes");
             dialog.closeDialog();
+            FocusLog.d(TAG, "dewidebug landing: search page (user chose Yes)");
+            SearchPresenter.instance(context).startSearch(null);
         }));
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_no), option -> {
+            sChoice = "No";
             FocusPrefetch.invalidateAll("Shorts setting changed by No");
             setActive(context, false, "user chose No");
             dialog.closeDialog();
+            FocusLog.d(TAG, "dewidebug landing: Home (user chose No)");
             BrowsePresenter.instance(context).selectSection(MediaGroup.TYPE_HOME);
         }));
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_kids), option -> {
+            sChoice = "Kids";
             setActive(context, true, "user chose Kids");
             setKids(context, true);
             dialog.closeDialog();
+            FocusLog.d(TAG, "dewidebug landing: Moomoo (user chose Kids)");
             BrowsePresenter.instance(context).selectSection(Moomoo.SECTION_ID);
         }));
-        dialog.showDialog(context.getString(R.string.focus_mode_title),
-                () -> Log.d(TAG, "dewidebug prompt closed: active=%s", sActive));
+        dialog.showDialog(context.getString(R.string.focus_mode_title), () -> {
+            sPromptShowing = false;
+            if (sChoice == null) {
+                FocusLog.d(TAG, "dewidebug prompt closed with no choice (Back, Home or replaced): staying in focus mode on section %s", bootSectionId(-1));
+            } else {
+                FocusLog.d(TAG, "dewidebug prompt closed: choice=%s active=%s kids=%s", sChoice, sActive, sKids);
+            }
+        });
+    }
+
+    public static void applyPromptBackground(Window window) {
+        if (window == null) {
+            return;
+        }
+
+        if (sPromptShowing) {
+            window.setBackgroundDrawable(new ColorDrawable(Color.BLACK));
+            FocusLog.d(TAG, "dewidebug prompt background: solid, so nothing loading behind it shows");
+        }
+    }
+
+    public static boolean plainSearchTags(String query, SearchTagsProvider.ResultsCallback callback) {
+        if (!sActive || !TextUtils.isEmpty(query)) {
+            return false;
+        }
+
+        List<String> own = null;
+
+        try {
+            own = SearchTagStorage.getTags();
+        } catch (RuntimeException e) {
+            FocusLog.e(TAG, "dewidebug plain search: reading saved searches failed: %s", e.getMessage());
+        }
+
+        FocusLog.d(TAG, "dewidebug plain search: empty box shows %s saved searches, no YouTube suggestions",
+                own != null ? own.size() : 0);
+        callback.onResults(Tag.from(own));
+        return true;
     }
 
     public static void onRefresh() {
@@ -142,7 +196,7 @@ public final class FocusMode {
             return Moomoo.SECTION_ID;
         }
 
-        return sActive ? MediaGroup.TYPE_SUBSCRIPTIONS : storedId;
+        return sActive ? MediaGroup.TYPE_CHANNEL_UPLOADS : storedId;
     }
 
     public static boolean topButtonEnabled(boolean storedValue) {
@@ -160,7 +214,7 @@ public final class FocusMode {
         }
 
         sKids = kids;
-        Log.d(TAG, "dewidebug kids=%s", kids);
+        FocusLog.d(TAG, "dewidebug kids=%s", kids);
         BrowsePresenter.instance(context).updateSections();
         MainUIData.instance(context).onDataChange();
     }
@@ -176,7 +230,7 @@ public final class FocusMode {
     private static void setActive(Context context, boolean active, String reason) {
         boolean changed = sActive != active;
         sActive = active;
-        Log.d(TAG, "dewidebug active=%s changed=%s reason=%s", active, changed, reason);
+        FocusLog.d(TAG, "dewidebug active=%s changed=%s reason=%s", active, changed, reason);
 
         applyShortsHiding(context, active);
 
@@ -193,7 +247,7 @@ public final class FocusMode {
             if (!prefs.contains(KEY_SAVED_SHORTS_MASK)) {
                 int savedMask = currentShortsMask(data);
                 prefs.edit().putInt(KEY_SAVED_SHORTS_MASK, savedMask).apply();
-                Log.d(TAG, "dewidebug saved user shorts mask=%s before hiding all", savedMask);
+                FocusLog.d(TAG, "dewidebug saved user shorts mask=%s before hiding all", savedMask);
             }
             data.setContentHidden(MediaServiceData.CONTENT_SHORTS_ALL, true);
         } else if (prefs.contains(KEY_SAVED_SHORTS_MASK)) {
@@ -203,9 +257,9 @@ public final class FocusMode {
                 data.setContentHidden(savedMask, true);
             }
             prefs.edit().remove(KEY_SAVED_SHORTS_MASK).apply();
-            Log.d(TAG, "dewidebug restored user shorts mask=%s", savedMask);
+            FocusLog.d(TAG, "dewidebug restored user shorts mask=%s", savedMask);
         } else {
-            Log.d(TAG, "dewidebug normal mode, no saved shorts mask to restore");
+            FocusLog.d(TAG, "dewidebug normal mode, no saved shorts mask to restore");
         }
     }
 

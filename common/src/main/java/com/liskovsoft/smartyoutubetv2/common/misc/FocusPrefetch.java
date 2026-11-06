@@ -4,7 +4,6 @@ import android.content.Context;
 
 import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaItem;
-import com.liskovsoft.sharedutils.mylogger.Log;
 
 import java.util.HashMap;
 import java.util.List;
@@ -46,7 +45,7 @@ final class FocusPrefetch {
             }
         }
 
-        Log.d(TAG, "dewidebug section cache wrapping %s grids, %s rows", sGrids.size(), sRows.size());
+        FocusLog.d(TAG, "dewidebug section cache wrapping %s grids, %s rows", sGrids.size(), sRows.size());
     }
 
     static synchronized void start(Context context) {
@@ -141,24 +140,24 @@ final class FocusPrefetch {
 
         synchronized void prefetch(OnFirst<T> onFirst) {
             if (mSource == null) {
-                Log.e(TAG, "dewidebug prefetch %s skipped: not registered", mName);
+                FocusLog.e(TAG, "dewidebug prefetch %s skipped: not registered", mName);
                 return;
             }
 
             long startedMs = System.currentTimeMillis();
             take(PREFETCH_MAX_AGE_MS).take(1).subscribe(
                     value -> {
-                        Log.d(TAG, "dewidebug prefetch %s ready after %s ms", mName, System.currentTimeMillis() - startedMs);
+                        FocusLog.d(TAG, "dewidebug prefetch %s ready after %s ms", mName, System.currentTimeMillis() - startedMs);
                         if (onFirst != null) {
                             onFirst.onFirst(value);
                         }
                     },
-                    error -> Log.e(TAG, "dewidebug prefetch %s failed: %s", mName, error.getMessage()));
+                    error -> FocusLog.e(TAG, "dewidebug prefetch %s failed: %s", mName, error.getMessage()));
         }
 
         synchronized void invalidate(String reason) {
             if (mCached != null) {
-                Log.d(TAG, "dewidebug cache %s discarded: %s", mName, reason);
+                FocusLog.d(TAG, "dewidebug cache %s discarded: %s", mName, reason);
             }
 
             mCached = null;
@@ -179,7 +178,7 @@ final class FocusPrefetch {
             long ageMs = System.currentTimeMillis() - mStartedMs;
 
             if (mCached != null && ageMs < mMaxAgeMs) {
-                Log.d(TAG, "dewidebug %s served from cache (%s ms old)", mName, ageMs);
+                FocusLog.d(TAG, "dewidebug %s served from cache (%s ms old)", mName, ageMs);
                 return mCached;
             }
 
@@ -201,7 +200,7 @@ final class FocusPrefetch {
                         }
                     })
                     .cache();
-            Log.d(TAG, "dewidebug %s fetching fresh", mName);
+            FocusLog.d(TAG, "dewidebug %s fetching fresh", mName);
             return mCached;
         }
     }

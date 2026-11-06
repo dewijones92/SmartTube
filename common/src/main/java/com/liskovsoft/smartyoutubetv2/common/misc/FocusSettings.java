@@ -3,7 +3,6 @@ package com.liskovsoft.smartyoutubetv2.common.misc;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.smartyoutubetv2.common.R;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.SettingsItem;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.OptionItem;
@@ -48,7 +47,7 @@ public final class FocusSettings {
             String title = minutes == 0 ? "Off" : minutes + " minutes";
             options.add(UiOptionItem.from(title, option -> {
                 prefs(context).edit().putInt(KEY_BEDTIME_MINUTES, minutes).apply();
-                Log.d(TAG, "dewidebug bedtime set to %s min", minutes);
+                FocusLog.d(TAG, "dewidebug bedtime set to %s min", minutes);
             }, minutes == current));
         }
 
