@@ -42,7 +42,7 @@ in the living room. Upstream SmartTube is merged in every night, so keep our foo
 
 ## How a batch runs (Dewi, 2026-10-31 and 2026-11-06; modelled on Totum's)
 
-**Big batches, one build** (Dewi, 2026-11-06): there is no local build and we are not adding one (no JDK 17). Write
+**Big batches, one build** (Dewi, 2026-11-06): we don't build locally. Write
 the whole batch, push it to a branch, let CI build it once, then test everything against that one APK. Fix what
 testing finds in one more push, not a build per change. Watch CI on the exact commit to its end.
 
@@ -95,7 +95,8 @@ testing finds in one more push, not a build per change. Watch CI on the exact co
 
 ## Build, release, device
 
-- There is no local build (JDK 21 only here; Gradle 7.5 needs 17), on purpose: batch the work (see above). Build in CI:
+- No local builds, by choice (Dewi, 2026-11-06): batch the work (see above) and build in CI. (A JDK 17 does exist at
+  `/home/dewi/code/jdk/jdk-17.0.13+11`; the old "JDK 21 only" note was wrong.) Build in CI:
   `gh workflow run nightly-sync.yml -R dewijones92/SmartTube --ref master -f force_build=true`.
 - `gh run view --log` can come back EMPTY for a finished run; `gh api repos/dewijones92/SmartTube/actions/runs/<id>/logs`
   (a zip) has the full log. An empty capture is not a clean run.
