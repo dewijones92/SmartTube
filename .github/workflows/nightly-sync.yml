@@ -133,6 +133,13 @@ jobs:
           ./gradlew --no-daemon assembleStfocusRelease -PfocusBuild=${{ github.run_number }}
           ls -la "$APK_DIR"
 
+      - name: Build voice bridge
+        if: steps.merge.outputs.build == 'true'
+        continue-on-error: true
+        run: |
+          ./gradlew --no-daemon -p focus/bridge assembleRelease -PfocusBuild=${{ github.run_number }}
+          ls -la focus/bridge/build/outputs/apk/release
+
       - name: Prepare release files
         if: steps.merge.outputs.build == 'true'
         id: files
@@ -145,6 +152,12 @@ jobs:
           for ABI in armeabi-v7a arm64-v8a x86; do
             cp "$APK_DIR"/SmartTube_focus_*_"$ABI".apk "release/smarttube_focus_${ABI}.apk"
           done
+          BRIDGE=focus/bridge/build/outputs/apk/release/focusbridge-release.apk
+          if [ -f "$BRIDGE" ]; then
+            cp "$BRIDGE" release/smarttube_focus_voice_bridge.apk
+          else
+            echo "::warning::Voice bridge APK missing; publishing Focus without it"
+          fi
           BASE="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/latest"
           jq -n \
             --arg base "$BASE" --arg name "$VERSION_NAME" --argjson code "$VERSION_CODE" \
