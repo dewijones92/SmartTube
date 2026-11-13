@@ -69,7 +69,7 @@ public final class FocusPanels {
 
         if (!sUserKeySinceClose) {
             FocusLog.d(TAG, "dewidebug panel closed: user pressed %s %s ms after the close, so any pause now is theirs",
-                    KeyEvent.keyCodeToString(code), SystemClock.uptimeMillis() - sClosedAtMs);
+                    FocusTrace.keyName(code), SystemClock.uptimeMillis() - sClosedAtMs);
         }
 
         sUserKeySinceClose = true;
@@ -132,10 +132,16 @@ public final class FocusPanels {
             skip = "the pause was noticed " + sinceClose + " ms after the close, outside the " + RESUME_WINDOW_MS + " ms window";
         } else if (pauseAt < sClosedAtMs) {
             skip = "no pause event was seen after the close (player replaced or released?)";
-        } else if (player.isEngineBlocked()) {
-            skip = "the engine is blocked (background, PIP or closing)";
-        } else if (!"PlaybackActivity".equals(FocusTrace.resumedActivity())) {
-            skip = "the player is not the resumed screen (resumed=" + FocusTrace.resumedActivity() + ")";
+        } else if (player.isEngineBlocked() || !"PlaybackActivity".equals(FocusTrace.resumedActivity())) {
+            String wait = player.isEngineBlocked() ? "the engine is blocked (background, PIP or closing)"
+                    : "the player is not the resumed screen (resumed=" + FocusTrace.resumedActivity() + ")";
+
+            if (sinceClose + TICK_MS <= RESUME_WINDOW_MS) {
+                FocusLog.d(TAG, "dewidebug panel closed: paused, waiting a tick because %s", wait);
+                return;
+            }
+
+            skip = wait;
         } else if (caller.contains("MediaSession") || caller.contains("PlayPause") || caller.contains("AudioFocus")) {
             skip = "the pause came from a media key, the media session or audio focus";
         } else if (caller.contains("RemoteController")) {

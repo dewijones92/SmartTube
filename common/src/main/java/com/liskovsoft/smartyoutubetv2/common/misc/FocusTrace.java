@@ -34,11 +34,26 @@ public final class FocusTrace {
             return;
         }
 
-        String key = event.isPrintingKey() ? "(printing key)" : KeyEvent.keyCodeToString(event.getKeyCode());
+        String key = keyName(event.getKeyCode());
         FocusLog.d(TAG, "dewidebug key %s %s %s repeat=%s source=0x%s device=%s",
                 where, key, actionName(event.getAction()), repeat,
                 Integer.toHexString(event.getSource()), event.getDeviceId());
         FocusPanels.onKey(event);
+    }
+
+    public static void onSetPlayWhenReady(Context context, boolean play) {
+        if (!isEnabled(context)) {
+            return;
+        }
+
+        String caller = caller();
+
+        if (!play) {
+            sLastPauseCaller = caller;
+            sLastPauseAtMs = SystemClock.uptimeMillis();
+        }
+
+        FocusLog.d(TAG, "dewidebug view setPlayWhenReady(%s) resumed=%s called from: %s", play, sResumedActivity, caller);
     }
 
     public static void onLifecycle(Activity activity, String event) {
@@ -79,7 +94,7 @@ public final class FocusTrace {
                 if (playChanged) {
                     String caller = caller();
 
-                    if (!playWhenReady) {
+                    if (!playWhenReady && !isRecentViewPause()) {
                         sLastPauseCaller = caller;
                         sLastPauseAtMs = SystemClock.uptimeMillis();
                     }
@@ -133,6 +148,19 @@ public final class FocusTrace {
 
     static String resumedActivity() {
         return sResumedActivity;
+    }
+
+    static String keyName(int code) {
+        boolean printing = (code >= KeyEvent.KEYCODE_0 && code <= KeyEvent.KEYCODE_POUND)
+                || (code >= KeyEvent.KEYCODE_A && code <= KeyEvent.KEYCODE_PERIOD)
+                || (code >= KeyEvent.KEYCODE_SPACE && code <= KeyEvent.KEYCODE_SPACE)
+                || (code >= KeyEvent.KEYCODE_GRAVE && code <= KeyEvent.KEYCODE_AT)
+                || (code >= KeyEvent.KEYCODE_NUMPAD_0 && code <= KeyEvent.KEYCODE_NUMPAD_RIGHT_PAREN);
+        return printing ? "(printing key)" : KeyEvent.keyCodeToString(code);
+    }
+
+    private static boolean isRecentViewPause() {
+        return sLastPauseAtMs >= 0 && SystemClock.uptimeMillis() - sLastPauseAtMs < 50 && !sLastPauseCaller.startsWith("(no app frames)");
     }
 
     private static String caller() {

@@ -25,12 +25,15 @@ release build's own logging (`Log`) is silent, so nothing on the device said wha
     action, repeat (every 10th repeat only), source and device; letters and digits are logged as "(printing key)" so
     typed searches stay out of the log;
   - every activity lifecycle step (created, started, resumed, paused, stopped, destroyed) with task id.
-  Hooks: one line each in `PlaybackFragment.createPlayer`, `LeanbackActivity.dispatchKeyEvent` and
-  `AppDialogActivity.dispatchKeyEvent`; lifecycle comes from the callbacks `FocusSpeed` already registers.
+  - every `PlaybackView.setPlayWhenReady` call with its caller, taken synchronously at the app's entry point, because a
+    pause issued inside another player callback is queued by ExoPlayer and the listener's stack would not show it.
+  Hooks: one line each in `PlaybackFragment.createPlayer`, `PlaybackFragment.setPlayWhenReady`,
+  `LeanbackActivity.dispatchKeyEvent` and `AppDialogActivity.dispatchKeyEvent`; lifecycle comes from the callbacks `FocusSpeed` already registers.
 - **The panel-close guard** (`FocusPanels`): if the video was playing when a panel closed and is paused within 3 s,
   Focus resumes it once and logs who paused it. It leaves the pause alone when: the user pressed any key other than
   Back after the close; no pause event happened after the close (a replaced or released player); the engine is
-  blocked (background, PIP); the player is not the resumed screen (Home was pressed); the caller shows a media key,
+  blocked (background, PIP) or the player is not the resumed screen (Home was pressed), re-checked each tick until the
+  window ends because both can be brief during the switch back from the panel; the caller shows a media key,
   the media session or audio focus (`MediaSession`, `PlayPause`, `AudioFocus`), a phone remote (`RemoteController`),
   the sleep timer, or a frame-rate switch (`AutoFrameRate`/`AfrRestart`, which resumes on its own); the video has
   ended; or it was already paused at the close. Each decision is logged with its reason. *Claude: a guard rather than removing

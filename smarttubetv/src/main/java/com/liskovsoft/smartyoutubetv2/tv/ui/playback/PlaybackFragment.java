@@ -1004,6 +1004,7 @@ public class PlaybackFragment extends SeekModePlaybackFragment implements Playba
 
     @Override
     public void setPlayWhenReady(boolean play) {
+        FocusTrace.onSetPlayWhenReady(getContext(), play);
         mExoPlayerController.setPlayWhenReady(play);
     }
 
