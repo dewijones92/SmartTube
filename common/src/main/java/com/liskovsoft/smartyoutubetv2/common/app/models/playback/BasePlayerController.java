@@ -23,6 +23,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.presenters.SearchPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.views.PlaybackView;
 import com.liskovsoft.smartyoutubetv2.common.app.views.ViewManager;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.FormatItem;
+import com.liskovsoft.smartyoutubetv2.common.misc.FocusPanels;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.MotherActivity;
 import com.liskovsoft.smartyoutubetv2.common.misc.ScreensaverManager;
@@ -40,6 +41,7 @@ public abstract class BasePlayerController implements PlayerEventListener {
     private PlaybackPresenter mMainController;
     private Context mContext;
     private final Runnable mFitVideoStart = () -> {
+        FocusPanels.onPanel(getContext(), getPlayer(), "opened");
         AppDialogPresenter settingsPresenter = getAppDialogPresenter();
         if (getPlayer() == null || settingsPresenter.isOverlay() || getPlayerTweaksData().isDontResizeVideoToFitDialogEnabled()) {
             return;
@@ -68,6 +70,7 @@ public abstract class BasePlayerController implements PlayerEventListener {
                 Gravity.END | Gravity.CENTER_VERTICAL : Gravity.START | Gravity.CENTER_VERTICAL);
     };
     private final Runnable mFitVideoFinish = () -> {
+        FocusPanels.onPanel(getContext(), getPlayer(), "closed");
         if (getPlayer() == null || getPlayerTweaksData().isDontResizeVideoToFitDialogEnabled()) {
             return;
         }
