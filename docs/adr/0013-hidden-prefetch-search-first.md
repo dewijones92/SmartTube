@@ -24,7 +24,7 @@ saved searches (`SearchTagStorage`, 50 most recent) only when YouTube returns no
 - **Yes** closes the prompt and opens the search page (`SearchPresenter.startSearch(null)`). With SmartTube's
   "Instant voice search" setting on, that opens voice search instead of the keyboard, as upstream does.
 - **Behind the search page** the start section is Channels (`bootSectionId` returns `TYPE_CHANNEL_UPLOADS` in focus
-  mode), so Back from search shows Channels, not Subscriptions. *Claude, not separately asked.*
+  mode), so Back from search shows Channels, not Subscriptions. *Claude, not separately asked.* *Amended by [ADR 0014](0014-batch5-search-page-voice-bridge.md): a Search page, not Channels.*
 - **Plain search.** In focus mode (Kids included), an empty box shows only the user's own saved searches, never
   YouTube's suggestions (`FocusMode.plainSearchTags`, hooked in `MediaServiceSearchTagProvider`). Typing still gets
   YouTube's autocomplete. Full SmartTube mode is unchanged.

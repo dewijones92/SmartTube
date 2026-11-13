@@ -14,6 +14,9 @@ in the living room. Upstream SmartTube is merged in every night, so keep our foo
    already passed rule 6 in this fork, and its description says so plainly: device, build, what happy path was
    run, what was checked (screen, logcat, timings). If the upstream branch's code differs from the fork's
    (no flavour gate, different call), test the exact upstream build too, or say it wasn't (Dewi, 2026-10-31).
+   Actively try to upstream the sensible changes, and attach the end-to-end evidence to the PR itself: screenshots
+   or a screen recording of the happy path, and the relevant logcat lines, from the build the PR describes
+   (Dewi, 2026-11-13). A feature with no attachable evidence isn't ready to offer upstream.
    Measure the change **on its own** (A/B against upstream, same videos, 5 runs each) before claiming a number:
    PR #6394 claimed a saving that came from other changes and measured as zero, so we closed it.
 3. **Record decisions as ADRs** in `docs/adr/` (next number, add to the README table, say who decided).
@@ -82,12 +85,15 @@ testing finds in one more push, not a build per change. Watch CI on the exact co
 
 - `common/.../misc/FocusMode.java` launch prompt, session overlay, section filter (ADR 0003)
 - `common/.../misc/FocusPrefetch.java` warm Subscriptions/Home while the prompt is up, hidden by a solid prompt
-  background (ADR 0009, 0013)
+  background (ADR 0009, 0013); the focus-mode Search page and Kids History live in `FocusSections`/`FocusMode` (ADR 0014)
 - `FocusMode.plainSearchTags` empty search box shows only your own saved searches in focus mode (ADR 0013)
 - `common/.../misc/FocusLog.java` logging that survives release builds
 - `common/.../misc/Moomoo.java` kids' section (ADR 0008)
 - `common/.../misc/AfrRestart.java` "Adjusting TV…" + restart after a frame-rate switch (ADR 0009)
 - `docs/BACKLOG.md` work Dewi has asked for, in order; no code for an item until he says go
+- `common/.../misc/FocusPanels.java` logs playback for 8 s around an info/comments panel (ADR 0014)
+- `focus/bridge/` separate Alexa voice-search bridge app, `com.amazon.firetv.youtube` -> Focus (ADR 0014); built by
+  `./gradlew -p focus/bridge assembleRelease`
 - `smarttubetv/src/stfocus/` flavour resources: icons, colours, update URL
 - `focus/branding/*.py` regenerate icons
 - `focus/tools/measure-start.sh` click-to-picture timings from logcat (navigates Moomoo rows: prefer deep-linking tennis videos instead, see step 4)

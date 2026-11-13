@@ -19,3 +19,6 @@ Verdicts: **Yes** (worth offering), **Maybe** (needs generalising first), **No**
 | Moomoo kids' section with fixed channels | 0008 | **No** | Hard-coded to our family's channels. A generic "pin a channel's Popular videos as a section" might be Maybe. |
 | Separate flavour, jade branding, nightly sync, own update URL | 0002, 0004–0006 | **No** | Fork plumbing. |
 | Plain search page (empty box shows only your own saved searches) and a solid background behind the launch prompt | 0013 | **No** | Built on the launch prompt and focus mode. A generic "hide popular searches on an empty box" toggle might be Maybe; upstream has a commented-out "popular searches" setting already. |
+| Prompt choice opens its screen before the prompt closes; Search page; History in Kids; closing a leftover player at the prompt | 0014 | **No** | All built on the launch prompt and focus mode. |
+| Voice bridge app for Focus (`com.amazon.firetv.youtube` forwarding to `org.smarttube.focus`) | 0014 | **No** | Fork plumbing. Upstream's own bridge does the same for its packages. |
+| Playback pause when the info or comments panel closes | 0014 | **Pending** | Instrumented only. If it reproduces on upstream SmartTube, the fix is a strong PR candidate, with on-device evidence attached (rule 2). |

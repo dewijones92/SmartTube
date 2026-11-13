@@ -5,7 +5,8 @@ When an item ships, remove it here and record the decision in an ADR.
 
 ## 1. Video stutters when the info or comments panel closes
 
-**Asked:** Dewi, 2026-11-13. **Status:** not started, no code until Dewi says go.
+**Asked:** Dewi, 2026-11-13. **Status:** in progress (batch 5, ADR 0014): instrumented with `FocusPanels`, cause
+not yet proven.
 
 **What happens:** while a video is playing, pressing the info icon opens the info panel at the side. Closing it
 makes the video stop, then resume after a gap of a few seconds. Comments do the same: they open at the side, and
@@ -22,3 +23,6 @@ closing them restarts playback oddly.
   launch prompt is up, so it should not be the cause, but rule it out.
 - If it is upstream, it is a strong upstream PR candidate (rule 2).
 - Test on the emulator or the stick with the TV off, with a tennis video, and prove it from logcat (rule 10).
+- 2026-11-13 findings: the info panel calls `fitVideoIntoDialog` (shrinks the video beside the panel and restores it on
+  close); logcat showed "Could not find corresponding native window for surface" on close. Not proven as the cause:
+  the first measurement was spoilt by DPAD_RIGHT seeking. Next: read `FocusPanels` lines from the batch 5 build.

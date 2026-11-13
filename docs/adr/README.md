@@ -19,4 +19,5 @@ open to challenge.
 | [0010](0010-speed-batch-1.md) | Speed batch 1: earlier format fetch, warm engine, no AFR overlay wait | Accepted |
 | [0011](0011-speed-batch-2.md) | Speed batch 2: warm PO token, sticky refresh rate, section cache, next-episode preload | Accepted |
 | [0012](0012-batch3-tennis-kids-bedtime.md) | Tennis, Kids mode, bedtime, more Moomoo, Continue watching | Accepted |
-| [0013](0013-hidden-prefetch-search-first.md) | Hidden prefetch behind the prompt; distraction-free opens a plain search page | Accepted |
+| [0013](0013-hidden-prefetch-search-first.md) | Hidden prefetch behind the prompt; distraction-free opens a plain search page | Accepted; boot section amended by 0014 |
+| [0014](0014-batch5-search-page-voice-bridge.md) | No flash after the prompt, Search page, History in Kids, Alexa voice bridge | Accepted |
