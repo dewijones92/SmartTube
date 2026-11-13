@@ -62,3 +62,15 @@ stick it would open the hidden upstream test copy, not Focus.
   forward, so check the info button is focused (uiautomator) before pressing OK.
 - Voice search depends on Fire OS routing "search YouTube" to `com.amazon.firetv.youtube`; proven only once Dewi
   speaks a search on the real remote.
+
+## Verified (2026-11-13, build 32.74-focus.36 + bridge 1.0.36, Fire Stick with the TV off, emulator)
+- Voice: Dewi held the remote's mic and said "search YouTube for tennis"; logcat showed the bridge forwarding
+  `youtube://search?query=tennis&isVoice=true`, Focus starting cold in distraction-free mode, and the search results
+  on screen. Alexa does not react hands-free to speech from the soundbar: this remote needs the mic button held.
+- Yes on the stick: screen recording goes prompt, search screen background, search page, with no browse frames.
+  (The emulator, which draws far slower, still showed 2-3 near-black browse frames, because upstream's
+  `AppDialogActivity.onUserLeaveHint` finishes the prompt as soon as search starts.)
+- Back from search lands on the Search page; No lands on Home; Kids shows Moomoo and History; Home on the prompt keeps
+  focus mode. No `FATAL EXCEPTION` on the stick across the run.
+- Not yet verified: the panel instrumentation (two attempts were spoilt by the test harness) and the leftover-player
+  path on a real relaunch.

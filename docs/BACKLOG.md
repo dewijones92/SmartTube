@@ -26,3 +26,5 @@ closing them restarts playback oddly.
 - 2026-11-13 findings: the info panel calls `fitVideoIntoDialog` (shrinks the video beside the panel and restores it on
   close); logcat showed "Could not find corresponding native window for surface" on close. Not proven as the cause:
   the first measurement was spoilt by DPAD_RIGHT seeking. Next: read `FocusPanels` lines from the batch 5 build.
+- Batch 5 ships `FocusPanels`: next time it happens on the TV, note the time; `adb logcat | grep 'dewidebug panel'`
+  shows position and play state every 500 ms for 8 s after the panel opens and closes.
