@@ -30,8 +30,8 @@ release build's own logging (`Log`) is silent, so nothing on the device said wha
   Hooks: one line each in `PlaybackFragment.createPlayer`, `PlaybackFragment.setPlayWhenReady`,
   `LeanbackActivity.dispatchKeyEvent` and `AppDialogActivity.dispatchKeyEvent`; lifecycle comes from the callbacks `FocusSpeed` already registers.
 - **The panel-close guard** (`FocusPanels`): if the video was playing when a panel closed and is paused within 3 s,
-  Focus resumes it once and logs who paused it. It leaves the pause alone when: the user pressed any key other than
-  Back after the close; no pause event happened after the close (a replaced or released player); the engine is
+  Focus resumes it once and logs who paused it. It leaves the pause alone when: the user pressed a pause-type key after
+  the close; no pause event happened after the close (a replaced or released player); the engine is
   blocked (background, PIP) or the player is not the resumed screen (Home was pressed), re-checked each tick until the
   window ends because both can be brief during the switch back from the panel; the caller shows a media key,
   the media session or audio focus (`MediaSession`, `PlayPause`, `AudioFocus`), a phone remote (`RemoteController`),
@@ -51,7 +51,9 @@ has different mode"), but a panel close is not an AFR switch, so its timestamp i
 
 ## Source fix
 - One line at the top of upstream's control dispatcher: `FocusPanels.ignoreMediaSessionPause` ignores a media-session
-  **pause** within 4 s of a panel closing when the user has pressed no key since. Plays always pass. Every media-session
+  **pause** within 4 s of a panel closing when the user has pressed no pause-type key since (OK, Enter, space, gamepad
+  A, headset hook, media play-pause, play, pause and stop; D-pad moves don't count, so a seek right after closing still
+  keeps the guard). Plays always pass. Every media-session
   play/pause request is logged with the decision.
 - `FocusTrace` also logs `AUDIO_BECOMING_NOISY`, HDMI audio plug changes and every display mode change, so the chain
   above shows up as named lines next time.
@@ -68,4 +70,13 @@ has different mode"), but a panel close is not an AFR switch, so its timestamp i
 - Upstream verdict stays Pending until the caller is known and the same pause is seen on upstream SmartTube.
 
 ## Verified
-(to fill in from the batch 6 build on the stick)
+On the stick, TV on, SmartTube player volume 0%, tennis video `cCQS2fUyDGk` (1080p50 AV1, AFR to 50 Hz), 2026-11-13:
+- 32.74-focus.40, info panel: the logs named the pause (`PlaybackFragment$3.dispatchSetPlayWhenReady`, media session,
+  856 ms after the close) next to the HDMI mode switch and `AUDIO_BECOMING_NOISY`; the guard rightly left a
+  media-session pause alone.
+- 32.74-focus.41, info panel (23:41:08): `media session asks playWhenReady=false: IGNORED` 607 ms after the close, with
+  `AUDIO_BECOMING_NOISY` and the 59.94 -> 50 Hz display changes logged beside it; position kept climbing ~500 ms a
+  tick for the whole 8 s trace (one slow tick while the TV re-synced); frames changing on screen.
+- 32.74-focus.41, comments panel (23:42:20): same, ignored 451 ms after the close, playback continued.
+- No `FATAL EXCEPTION` across the runs. First launch after `adb install -r` once took ~50 s to start playback (main
+  thread busy, keys swallowed); warm starts were ~6 s including the 3 s AFR pause.

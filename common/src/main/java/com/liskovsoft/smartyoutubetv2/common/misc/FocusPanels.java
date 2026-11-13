@@ -77,7 +77,9 @@ public final class FocusPanels {
 
         int code = event.getKeyCode();
 
-        if (code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_ESCAPE) {
+        if (!isPauseIntentKey(code)) {
+            FocusLog.d(TAG, "dewidebug panel closed: %s %s ms after the close is not a pause key, still guarding",
+                    FocusTrace.keyName(code), SystemClock.uptimeMillis() - sClosedAtMs);
             return;
         }
 
@@ -87,6 +89,24 @@ public final class FocusPanels {
         }
 
         sUserKeySinceClose = true;
+    }
+
+    private static boolean isPauseIntentKey(int code) {
+        switch (code) {
+            case KeyEvent.KEYCODE_DPAD_CENTER:
+            case KeyEvent.KEYCODE_ENTER:
+            case KeyEvent.KEYCODE_NUMPAD_ENTER:
+            case KeyEvent.KEYCODE_SPACE:
+            case KeyEvent.KEYCODE_BUTTON_A:
+            case KeyEvent.KEYCODE_HEADSETHOOK:
+            case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+            case KeyEvent.KEYCODE_MEDIA_PLAY:
+            case KeyEvent.KEYCODE_MEDIA_PAUSE:
+            case KeyEvent.KEYCODE_MEDIA_STOP:
+                return true;
+            default:
+                return false;
+        }
     }
 
     private static void tick() {
