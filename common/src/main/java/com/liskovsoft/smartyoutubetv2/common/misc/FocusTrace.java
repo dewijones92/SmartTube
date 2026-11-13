@@ -12,11 +12,13 @@ import com.liskovsoft.smartyoutubetv2.common.R;
 public final class FocusTrace {
     private static final String TAG = FocusTrace.class.getSimpleName();
     private static final int STACK_FRAMES = 10;
+    private static final int RAW_FRAMES = 6;
     private static Boolean sEnabled;
     private static String sLastPauseCaller = "";
     private static long sLastPauseAtMs = -1;
     private static boolean sLastPlayWhenReady;
     private static int sLastState = -1;
+    private static String sResumedActivity = "";
 
     private FocusTrace() {
     }
@@ -32,8 +34,9 @@ public final class FocusTrace {
             return;
         }
 
+        String key = event.isPrintingKey() ? "(printing key)" : KeyEvent.keyCodeToString(event.getKeyCode());
         FocusLog.d(TAG, "dewidebug key %s %s %s repeat=%s source=0x%s device=%s",
-                where, KeyEvent.keyCodeToString(event.getKeyCode()), actionName(event.getAction()), repeat,
+                where, key, actionName(event.getAction()), repeat,
                 Integer.toHexString(event.getSource()), event.getDeviceId());
         FocusPanels.onKey(event);
     }
@@ -43,8 +46,16 @@ public final class FocusTrace {
             return;
         }
 
+        String name = activity.getClass().getSimpleName();
+
+        if ("resumed".equals(event)) {
+            sResumedActivity = name;
+        } else if ("paused".equals(event) && name.equals(sResumedActivity)) {
+            sResumedActivity = "";
+        }
+
         FocusLog.d(TAG, "dewidebug life %s %s task=%s finishing=%s",
-                activity.getClass().getSimpleName(), event, activity.getTaskId(), activity.isFinishing());
+                name, event, activity.getTaskId(), activity.isFinishing());
     }
 
     public static void attachPlayer(Context context, Player player) {
@@ -54,7 +65,8 @@ public final class FocusTrace {
 
         sLastPlayWhenReady = player.getPlayWhenReady();
         sLastState = player.getPlaybackState();
-        FocusLog.d(TAG, "dewidebug player attached: playWhenReady=%s state=%s", sLastPlayWhenReady, stateName(sLastState));
+        String id = "player@" + Integer.toHexString(System.identityHashCode(player));
+        FocusLog.d(TAG, "dewidebug %s attached: playWhenReady=%s state=%s", id, sLastPlayWhenReady, stateName(sLastState));
 
         player.addListener(new Player.EventListener() {
             @Override
@@ -72,40 +84,41 @@ public final class FocusTrace {
                         sLastPauseAtMs = SystemClock.uptimeMillis();
                     }
 
-                    FocusLog.d(TAG, "dewidebug player playWhenReady -> %s (state=%s position=%s ms) called from: %s",
-                            playWhenReady, stateName(playbackState), player.getCurrentPosition(), caller);
+                    FocusLog.d(TAG, "dewidebug %s playWhenReady -> %s (state=%s position=%s ms resumed=%s) called from: %s",
+                            id, playWhenReady, stateName(playbackState), player.getCurrentPosition(), sResumedActivity, caller);
                 } else if (stateChanged) {
-                    FocusLog.d(TAG, "dewidebug player state -> %s (playWhenReady=%s position=%s ms)",
-                            stateName(playbackState), playWhenReady, player.getCurrentPosition());
+                    FocusLog.d(TAG, "dewidebug %s state -> %s (playWhenReady=%s position=%s ms)",
+                            id, stateName(playbackState), playWhenReady, player.getCurrentPosition());
                 }
             }
 
             @Override
             public void onIsPlayingChanged(boolean isPlaying) {
-                FocusLog.d(TAG, "dewidebug player isPlaying -> %s (playWhenReady=%s state=%s suppression=%s position=%s ms)",
-                        isPlaying, player.getPlayWhenReady(), stateName(player.getPlaybackState()),
+                FocusLog.d(TAG, "dewidebug %s isPlaying -> %s (playWhenReady=%s state=%s suppression=%s position=%s ms)",
+                        id, isPlaying, player.getPlayWhenReady(), stateName(player.getPlaybackState()),
                         player.getPlaybackSuppressionReason(), player.getCurrentPosition());
             }
 
             @Override
             public void onPlaybackSuppressionReasonChanged(int playbackSuppressionReason) {
-                FocusLog.d(TAG, "dewidebug player suppression -> %s (0=none, 1=transient audio focus loss)", playbackSuppressionReason);
+                FocusLog.d(TAG, "dewidebug %s suppression -> %s (0=none, 1=transient audio focus loss)", id, playbackSuppressionReason);
             }
 
             @Override
             public void onPositionDiscontinuity(int reason) {
-                FocusLog.d(TAG, "dewidebug player discontinuity reason=%s (0=transition 1=seek 2=seek adjust 3=ad 4=internal) position=%s ms",
-                        reason, player.getCurrentPosition());
+                boolean seek = reason == Player.DISCONTINUITY_REASON_SEEK || reason == Player.DISCONTINUITY_REASON_SEEK_ADJUSTMENT;
+                FocusLog.d(TAG, "dewidebug %s discontinuity reason=%s (0=transition 1=seek 2=seek adjust 3=ad 4=internal) position=%s ms%s",
+                        id, reason, player.getCurrentPosition(), seek ? " called from: " + caller() : "");
             }
 
             @Override
             public void onSeekProcessed() {
-                FocusLog.d(TAG, "dewidebug player seek processed: position=%s ms called from: %s", player.getCurrentPosition(), caller());
+                FocusLog.d(TAG, "dewidebug %s seek processed: position=%s ms", id, player.getCurrentPosition());
             }
 
             @Override
             public void onPlayerError(ExoPlaybackException error) {
-                FocusLog.e(TAG, "dewidebug player error type=%s: %s", error.type, error.getMessage());
+                FocusLog.e(TAG, "dewidebug %s error type=%s (0=source 1=renderer 2=unexpected 3=remote 4=oom): %s", id, error.type, error.getMessage());
             }
         });
     }
@@ -116,6 +129,10 @@ public final class FocusTrace {
 
     static long lastPauseAtMs() {
         return sLastPauseAtMs;
+    }
+
+    static String resumedActivity() {
+        return sResumedActivity;
     }
 
     private static String caller() {
@@ -144,7 +161,31 @@ public final class FocusTrace {
             }
         }
 
-        return taken == 0 ? "(no app frames: player-internal or system)" : result.toString();
+        StringBuilder raw = new StringBuilder();
+        int rawTaken = 0;
+
+        for (StackTraceElement frame : stack) {
+            String cls = frame.getClassName();
+
+            if (cls.startsWith(FocusTrace.class.getName()) || cls.contains("ExoPlayerImpl") || cls.contains("SimpleExoPlayer")
+                    || cls.contains("Lambda") || cls.startsWith("java.") || cls.startsWith("dalvik.")) {
+                continue;
+            }
+
+            if (raw.length() > 0) {
+                raw.append(" < ");
+            }
+
+            raw.append(cls.substring(cls.lastIndexOf('.') + 1)).append('.').append(frame.getMethodName())
+                    .append(':').append(frame.getLineNumber());
+
+            if (++rawTaken >= RAW_FRAMES) {
+                break;
+            }
+        }
+
+        return (taken == 0 ? "(no app frames)" : result.toString())
+                + " | raw: " + raw + " | thread: " + Thread.currentThread().getName();
     }
 
     private static String actionName(int action) {

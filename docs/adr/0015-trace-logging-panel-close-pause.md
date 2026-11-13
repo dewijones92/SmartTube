@@ -3,7 +3,7 @@
 - Status: Accepted
 - Date: 2026-11-13
 - Decided by: Dewi ("preempt future stuff with MORE MORE LOGS", and go ahead with the panel fix); Claude (how
-  each is built, and the guard's rules below)
+  each is built, and the guard's rules below, tightened after the fresh Sonnet review)
 
 ## Context
 Backlog item 1: the video stops when the info or comments panel closes. Reproduced on the stick on 2026-11-13 at
@@ -16,19 +16,24 @@ release build's own logging (`Log`) is silent, so nothing on the device said wha
 
 ## Decision
 - **`FocusTrace` logs the things a playback bug needs**, through `FocusLog` so release builds keep them:
-  - every `playWhenReady` change, with the app frames that called it (ExoPlayer 2.10 calls listeners synchronously,
-    and the build is not obfuscated, so the stack names the caller);
+  - every `playWhenReady` change, with the app frames that called it plus the top raw frames and the thread (ExoPlayer
+    2.10 calls listeners synchronously, and the build is not obfuscated, so the stack names the caller; the raw frames
+    keep a MediaSession or audio-focus pause visible, which sit in library packages);
+  - a per-player id (`player@<hash>`) on every player line, so a replaced player shows as a new id;
   - playback state, `isPlaying`, suppression (audio focus), discontinuities, seeks with their caller, player errors;
   - every key reaching a `LeanbackActivity` (browse, search, player) or the panel window (`AppDialogActivity`), with
-    action, repeat (every 10th repeat only), source and device;
+    action, repeat (every 10th repeat only), source and device; letters and digits are logged as "(printing key)" so
+    typed searches stay out of the log;
   - every activity lifecycle step (created, started, resumed, paused, stopped, destroyed) with task id.
   Hooks: one line each in `PlaybackFragment.createPlayer`, `LeanbackActivity.dispatchKeyEvent` and
   `AppDialogActivity.dispatchKeyEvent`; lifecycle comes from the callbacks `FocusSpeed` already registers.
 - **The panel-close guard** (`FocusPanels`): if the video was playing when a panel closed and is paused within 3 s,
-  Focus resumes it once and logs who paused it. It leaves the pause alone when the user pressed any key other than
-  Back after the close, when the pause came from a media key (`MediaSession`/`PlayPause` in the caller) or from a
-  frame-rate switch (`AutoFrameRate`/`AfrRestart`, which resumes on its own), when the video has ended, or when it
-  was already paused at the close. Each decision is logged with its reason. *Claude: a guard rather than removing
+  Focus resumes it once and logs who paused it. It leaves the pause alone when: the user pressed any key other than
+  Back after the close; no pause event happened after the close (a replaced or released player); the engine is
+  blocked (background, PIP); the player is not the resumed screen (Home was pressed); the caller shows a media key,
+  the media session or audio focus (`MediaSession`, `PlayPause`, `AudioFocus`), a phone remote (`RemoteController`),
+  the sleep timer, or a frame-rate switch (`AutoFrameRate`/`AfrRestart`, which resumes on its own); the video has
+  ended; or it was already paused at the close. Each decision is logged with its reason. *Claude: a guard rather than removing
   the pause at its source, because the source is not yet known; the new caller log will name it, and the source fix
   (and an upstream PR) can follow.*
 

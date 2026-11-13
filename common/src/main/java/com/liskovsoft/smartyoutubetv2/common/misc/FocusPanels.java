@@ -130,8 +130,18 @@ public final class FocusPanels {
             skip = "the video has ended";
         } else if (sinceClose > RESUME_WINDOW_MS) {
             skip = "the pause was noticed " + sinceClose + " ms after the close, outside the " + RESUME_WINDOW_MS + " ms window";
-        } else if (caller.contains("MediaSession") || caller.contains("PlayPause")) {
-            skip = "the pause came from a media key";
+        } else if (pauseAt < sClosedAtMs) {
+            skip = "no pause event was seen after the close (player replaced or released?)";
+        } else if (player.isEngineBlocked()) {
+            skip = "the engine is blocked (background, PIP or closing)";
+        } else if (!"PlaybackActivity".equals(FocusTrace.resumedActivity())) {
+            skip = "the player is not the resumed screen (resumed=" + FocusTrace.resumedActivity() + ")";
+        } else if (caller.contains("MediaSession") || caller.contains("PlayPause") || caller.contains("AudioFocus")) {
+            skip = "the pause came from a media key, the media session or audio focus";
+        } else if (caller.contains("RemoteController")) {
+            skip = "the pause came from a phone remote";
+        } else if (caller.contains("checkSleepTimer")) {
+            skip = "the pause came from the sleep timer";
         } else if (caller.contains("AutoFrameRate") || caller.contains("AfrRestart")) {
             skip = "the pause belongs to a frame-rate switch, which resumes on its own";
         }
