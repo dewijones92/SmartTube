@@ -1,7 +1,16 @@
 package com.liskovsoft.smartyoutubetv2.common.misc;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.hardware.display.DisplayManager;
+import android.media.AudioManager;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.Display;
 import android.os.SystemClock;
 import android.view.KeyEvent;
 
@@ -19,6 +28,7 @@ public final class FocusTrace {
     private static boolean sLastPlayWhenReady;
     private static int sLastState = -1;
     private static String sResumedActivity = "";
+    private static boolean sSystemWatched;
 
     private FocusTrace() {
     }
@@ -80,6 +90,7 @@ public final class FocusTrace {
 
         sLastPlayWhenReady = player.getPlayWhenReady();
         sLastState = player.getPlaybackState();
+        watchSystem(context);
         String id = "player@" + Integer.toHexString(System.identityHashCode(player));
         FocusLog.d(TAG, "dewidebug %s attached: playWhenReady=%s state=%s", id, sLastPlayWhenReady, stateName(sLastState));
 
@@ -163,6 +174,55 @@ public final class FocusTrace {
         return sLastPauseAtMs >= 0 && SystemClock.uptimeMillis() - sLastPauseAtMs < 50 && !sLastPauseCaller.startsWith("(no app frames)");
     }
 
+    private static void watchSystem(Context context) {
+        if (sSystemWatched || context == null) {
+            return;
+        }
+
+        sSystemWatched = true;
+        Context app = context.getApplicationContext();
+
+        try {
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+            if (Build.VERSION.SDK_INT >= 21) {
+                filter.addAction(AudioManager.ACTION_HDMI_AUDIO_PLUG);
+            }
+            app.registerReceiver(new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context c, Intent intent) {
+                    FocusLog.d(TAG, "dewidebug system %s state=%s resumed=%s", intent.getAction(),
+                            intent.getIntExtra(AudioManager.EXTRA_AUDIO_PLUG_STATE, -1), sResumedActivity);
+                }
+            }, filter);
+
+            DisplayManager displays = (DisplayManager) app.getSystemService(Context.DISPLAY_SERVICE);
+
+            if (displays != null) {
+                displays.registerDisplayListener(new DisplayManager.DisplayListener() {
+                    @Override
+                    public void onDisplayAdded(int displayId) {
+                    }
+
+                    @Override
+                    public void onDisplayRemoved(int displayId) {
+                    }
+
+                    @Override
+                    public void onDisplayChanged(int displayId) {
+                        Display display = displays.getDisplay(displayId);
+                        Object mode = display == null ? null : Build.VERSION.SDK_INT >= 23 ? display.getMode() : display.getRefreshRate() + " Hz";
+                        FocusLog.d(TAG, "dewidebug system display %s changed: %s resumed=%s", displayId, mode, sResumedActivity);
+                    }
+                }, new Handler(Looper.getMainLooper()));
+            }
+
+            FocusLog.d(TAG, "dewidebug system watching audio-noisy, HDMI audio plug and display mode changes");
+        } catch (RuntimeException e) {
+            FocusLog.e(TAG, "dewidebug system watch failed: %s", e);
+        }
+    }
+
     private static String caller() {
         StackTraceElement[] stack = new Throwable().getStackTrace();
         StringBuilder result = new StringBuilder();
@@ -242,7 +302,7 @@ public final class FocusTrace {
         }
     }
 
-    private static boolean isEnabled(Context context) {
+    static boolean isEnabled(Context context) {
         if (sEnabled == null && context != null) {
             sEnabled = context.getResources().getBoolean(R.bool.focus_mode_available);
         }

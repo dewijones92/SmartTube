@@ -22,7 +22,7 @@ release build's own logging (`Log`) is silent, so nothing on the device said wha
   - a per-player id (`player@<hash>`) on every player line, so a replaced player shows as a new id;
   - playback state, `isPlaying`, suppression (audio focus), discontinuities, seeks with their caller, player errors;
   - every key reaching a `LeanbackActivity` (browse, search, player) or the panel window (`AppDialogActivity`), with
-    action, repeat (every 10th repeat only), source and device; letters and digits are logged as "(printing key)" so
+    action, repeat (every 10th repeat only), source and device; printing keys (letters, digits, punctuation, space) are logged as "(printing key)" so
     typed searches stay out of the log;
   - every activity lifecycle step (created, started, resumed, paused, stopped, destroyed) with task id.
   - every `PlaybackView.setPlayWhenReady` call with its caller, taken synchronously at the app's entry point, because a
@@ -40,7 +40,28 @@ release build's own logging (`Log`) is silent, so nothing on the device said wha
   the pause at its source, because the source is not yet known; the new caller log will name it, and the source fix
   (and an upstream PR) can follow.*
 
+## Root cause (found with the new logs, 2026-11-13 23:32, 32.74-focus.40)
+The info panel is its own window, shown at the TV's normal mode; the player's window asks for the video's frame
+rate (50 Hz for the tennis clip). Closing the panel makes the system switch the HDMI mode back to 50 Hz
+(`SetActiveConfig` at 23:32:06.746). The switch briefly drops HDMI audio (`hdmi_audio` switch state 0), Android
+broadcasts `ACTION_AUDIO_BECOMING_NOISY` (06.874), and 0.6 s later a pause reaches the player through the media
+session (`MediaSessionConnector` → upstream's `PlaybackFragment` control dispatcher → `dispatchSetPlayWhenReady`,
+07.497). Upstream already blocks media-session play/pause for 5 s after an AFR switch for exactly this reason ("window
+has different mode"), but a panel close is not an AFR switch, so its timestamp is old and the pause gets through.
+
+## Source fix
+- One line at the top of upstream's control dispatcher: `FocusPanels.ignoreMediaSessionPause` ignores a media-session
+  **pause** within 4 s of a panel closing when the user has pressed no key since. Plays always pass. Every media-session
+  play/pause request is logged with the decision.
+- `FocusTrace` also logs `AUDIO_BECOMING_NOISY`, HDMI audio plug changes and every display mode change, so the chain
+  above shows up as named lines next time.
+- The resume guard stays as a second line of defence.
+- Upstream: a strong PR candidate. The general fix is to treat "the player window regained focus with a different
+  display mode" like an AFR switch in that dispatcher; it needs the same evidence from an upstream build (rule 2).
+
 ## Consequences
+- "Alexa, pause" within 4 s of closing a panel, with no remote key pressed, would be ignored once; the log says so.
+- A Home press with a return inside 3 s of a panel closing could be resumed by the guard (third review's note).
 - Logcat gets more lines per playback: a handful per play/pause and per key press. None fire per frame.
 - If the guard's exclusions miss a deliberate pause (for example a pause from somewhere new within 3 s of closing a
   panel), Focus would resume it once; the log line says so, with the caller.

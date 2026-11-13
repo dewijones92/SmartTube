@@ -15,6 +15,7 @@ public final class FocusPanels {
     private static final long TICK_MS = 500;
     private static final long TRACE_MS = 8_000;
     private static final long RESUME_WINDOW_MS = 3_000;
+    private static final long MEDIA_PAUSE_BLOCK_MS = 4_000;
     private static final Handler sHandler = new Handler(Looper.getMainLooper());
     private static PlayerEngine sPlayer;
     private static String sLastEvent;
@@ -54,6 +55,19 @@ public final class FocusPanels {
         FocusLog.d(TAG, "dewidebug panel %s: %s", event, describe(player));
         sHandler.removeCallbacks(sTick);
         sHandler.postDelayed(sTick, TICK_MS);
+    }
+
+    public static boolean ignoreMediaSessionPause(Context context, boolean playWhenReady) {
+        if (!FocusTrace.isEnabled(context)) {
+            return false;
+        }
+
+        long sinceClose = sClosedAtMs < 0 ? -1 : SystemClock.uptimeMillis() - sClosedAtMs;
+        boolean ignore = !playWhenReady && sClosedAtMs >= 0 && sinceClose <= MEDIA_PAUSE_BLOCK_MS && !sUserKeySinceClose;
+        FocusLog.d(TAG, "dewidebug media session asks playWhenReady=%s: %s (since panel close=%s ms, user key since close=%s)",
+                playWhenReady, ignore ? "IGNORED, a panel just closed and the HDMI mode switch makes Fire OS pause" : "passed on",
+                sinceClose, sUserKeySinceClose);
+        return ignore;
     }
 
     static void onKey(KeyEvent event) {

@@ -62,6 +62,7 @@ import com.liskovsoft.smartyoutubetv2.common.exoplayer.other.SubtitleManager;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.FormatItem;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.versions.renderer.CustomOverridesRenderersFactory;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.versions.selector.RestoreTrackSelector;
+import com.liskovsoft.smartyoutubetv2.common.misc.FocusPanels;
 import com.liskovsoft.smartyoutubetv2.common.misc.FocusTrace;
 import com.liskovsoft.smartyoutubetv2.common.prefs.MainUIData;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
@@ -670,6 +671,7 @@ public class PlaybackFragment extends SeekModePlaybackFragment implements Playba
         mMediaSessionConnector.setControlDispatcher(new DefaultControlDispatcher() {
             @Override
             public boolean dispatchSetPlayWhenReady(Player player, boolean playWhenReady) {
+                if (FocusPanels.ignoreMediaSessionPause(getContext(), playWhenReady)) return false;
                 // Fix exoplayer pause after activity is resumed (AFR switching).
                 // It's tied to activity state transitioning because window has different mode.
                 // NOTE: may be a problems with background playback or bluetooth button events
