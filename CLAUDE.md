@@ -87,6 +87,7 @@ testing finds in one more push, not a build per change. Watch CI on the exact co
 - `common/.../misc/FocusLog.java` logging that survives release builds
 - `common/.../misc/Moomoo.java` kids' section (ADR 0008)
 - `common/.../misc/AfrRestart.java` "Adjusting TV…" + restart after a frame-rate switch (ADR 0009)
+- `docs/BACKLOG.md` work Dewi has asked for, in order; no code for an item until he says go
 - `smarttubetv/src/stfocus/` flavour resources: icons, colours, update URL
 - `focus/branding/*.py` regenerate icons
 - `focus/tools/measure-start.sh` click-to-picture timings from logcat (navigates Moomoo rows: prefer deep-linking tennis videos instead, see step 4)
