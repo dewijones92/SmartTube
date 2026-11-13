@@ -12,6 +12,7 @@ import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import com.liskovsoft.sharedutils.prefs.GlobalPreferences;
 import com.liskovsoft.smartyoutubetv2.common.R;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.BrowseSection;
+import com.liskovsoft.smartyoutubetv2.common.app.models.data.SettingsItem;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerConstants;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.UiOptionItem;
@@ -19,7 +20,9 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.search.SearchTagsProvide
 import com.liskovsoft.smartyoutubetv2.common.app.models.search.vineyard.Tag;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.AppDialogPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.BrowsePresenter;
+import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.SearchPresenter;
+import com.liskovsoft.smartyoutubetv2.common.app.views.ViewManager;
 import com.liskovsoft.smartyoutubetv2.common.prefs.MainUIData;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerTweaksData;
 import com.liskovsoft.smartyoutubetv2.common.utils.IntentExtractor;
@@ -29,6 +32,7 @@ import com.liskovsoft.youtubeapi.service.internal.MediaServiceData;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 import io.reactivex.Observable;
 
@@ -53,6 +57,7 @@ public final class FocusMode {
     private static volatile boolean sKids;
     private static volatile boolean sPromptShowing;
     private static volatile String sChoice;
+    private static volatile boolean sLaunched;
 
     private FocusMode() {
     }
@@ -62,11 +67,12 @@ public final class FocusMode {
     }
 
     public static void registerSections(Context context, Map<Integer, BrowseSection> sections,
-                                        Map<Integer, Observable<MediaGroup>> grids, Map<Integer, Observable<List<MediaGroup>>> rows) {
+                                        Map<Integer, Observable<MediaGroup>> grids, Map<Integer, Observable<List<MediaGroup>>> rows,
+                                        Map<Integer, Callable<List<SettingsItem>>> tiles) {
         Moomoo.register(context, sections, rows);
 
         if (context != null && context.getResources().getBoolean(R.bool.focus_mode_available)) {
-            FocusSections.register(context, sections, rows);
+            FocusSections.register(context, sections, rows, tiles);
             FocusPrefetch.wrap(grids, rows);
         }
     }
@@ -83,8 +89,18 @@ public final class FocusMode {
 
         FocusSpeed.warmEngine(context);
 
+        boolean firstLaunch = !sLaunched;
+        sLaunched = true;
+
         if (IntentExtractor.hasData(intent)) {
-            FocusLog.d(TAG, "dewidebug prompt skipped: launched with a link or cast, keeping active=%s", sActive);
+            String searchText = IntentExtractor.extractSearchText(intent);
+            if (firstLaunch && !TextUtils.isEmpty(searchText)) {
+                setActive(context, true, "cold start from a search link (voice bridge)");
+                FocusLog.d(TAG, "dewidebug prompt skipped: cold search launch \"%s\", distraction-free", searchText);
+            } else {
+                FocusLog.d(TAG, "dewidebug prompt skipped: launched with a link or cast, keeping active=%s (firstLaunch=%s search=%s)",
+                        sActive, firstLaunch, searchText != null);
+            }
             applyShortsHiding(context, sActive);
             return;
         }
@@ -99,26 +115,29 @@ public final class FocusMode {
         AppDialogPresenter dialog = AppDialogPresenter.instance(context);
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_yes), option -> {
             sChoice = "Yes";
+            closeLeftoverPlayer(context);
             setActive(context, true, "user chose Yes");
-            dialog.closeDialog();
-            FocusLog.d(TAG, "dewidebug landing: search page (user chose Yes)");
+            FocusLog.d(TAG, "dewidebug landing: search page (user chose Yes), opened before the prompt closes");
             SearchPresenter.instance(context).startSearch(null);
+            dialog.closeDialog();
         }));
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_no), option -> {
             sChoice = "No";
+            closeLeftoverPlayer(context);
             FocusPrefetch.invalidateAll("Shorts setting changed by No");
             setActive(context, false, "user chose No");
-            dialog.closeDialog();
-            FocusLog.d(TAG, "dewidebug landing: Home (user chose No)");
+            FocusLog.d(TAG, "dewidebug landing: Home (user chose No), selected before the prompt closes");
             BrowsePresenter.instance(context).selectSection(MediaGroup.TYPE_HOME);
+            dialog.closeDialog();
         }));
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_kids), option -> {
             sChoice = "Kids";
+            closeLeftoverPlayer(context);
             setActive(context, true, "user chose Kids");
             setKids(context, true);
-            dialog.closeDialog();
-            FocusLog.d(TAG, "dewidebug landing: Moomoo (user chose Kids)");
+            FocusLog.d(TAG, "dewidebug landing: Moomoo (user chose Kids), selected before the prompt closes");
             BrowsePresenter.instance(context).selectSection(Moomoo.SECTION_ID);
+            dialog.closeDialog();
         }));
         sPromptShowing = true;
         dialog.showDialog(context.getString(R.string.focus_mode_title), () -> {
@@ -129,6 +148,26 @@ public final class FocusMode {
                 FocusLog.d(TAG, "dewidebug prompt closed: choice=%s active=%s kids=%s", sChoice, sActive, sKids);
             }
         });
+    }
+
+    private static void closeLeftoverPlayer(Context context) {
+        PlaybackPresenter playback = PlaybackPresenter.instance(context);
+        Object view = playback.getView();
+
+        if (view == null) {
+            FocusLog.d(TAG, "dewidebug no player left from before the prompt");
+            return;
+        }
+
+        MotherActivity activity = ViewManager.getMotherActivity(view);
+
+        if (activity != null) {
+            ViewManager.instance(context).removeTop(activity);
+        }
+
+        playback.forceFinish();
+        FocusLog.d(TAG, "dewidebug closed the player left from before the prompt (activity found=%s), so Back cannot reopen it",
+                activity != null);
     }
 
     public static void applyPromptBackground(Window window) {
@@ -181,6 +220,7 @@ public final class FocusMode {
 
         if (sKids && Moomoo.isRegistered()) {
             Moomoo.insertAfterChannels(visible);
+            visible.add(historyItem(items));
             return visible;
         }
 
@@ -196,12 +236,33 @@ public final class FocusMode {
             FocusSections.insertAfter(visible, Moomoo.SECTION_ID);
         }
 
+        if (sActive && FocusSections.isRegistered()) {
+            FocusSections.insertSearchFirst(visible);
+        }
+
         return visible;
+    }
+
+    private static Video historyItem(List<Video> items) {
+        for (Video item : items) {
+            if (item != null && item.sectionId == MediaGroup.TYPE_HISTORY) {
+                return item;
+            }
+        }
+
+        Video history = new Video();
+        history.sectionId = MediaGroup.TYPE_HISTORY;
+        FocusLog.d(TAG, "dewidebug kids sidebar: History not pinned by the user, adding it anyway");
+        return history;
     }
 
     public static int bootSectionId(int storedId) {
         if (sKids) {
             return Moomoo.SECTION_ID;
+        }
+
+        if (sActive && FocusSections.isRegistered()) {
+            return FocusSections.SEARCH_ID;
         }
 
         return sActive ? MediaGroup.TYPE_CHANNEL_UPLOADS : storedId;

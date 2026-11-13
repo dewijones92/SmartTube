@@ -181,7 +181,7 @@ public class BrowsePresenter extends BasePresenter<BrowseView> implements Sectio
 
         initSettingsGridMapping();
         initLocalGridMapping();
-        FocusMode.registerSections(getContext(), mSectionsMapping, mGridMapping, mRowMapping);
+        FocusMode.registerSections(getContext(), mSectionsMapping, mGridMapping, mRowMapping, mSettingsGridMapping);
     }
 
     private void initSectionMapping() {
