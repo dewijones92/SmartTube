@@ -10,6 +10,7 @@ import com.liskovsoft.smartyoutubetv2.common.R;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.OptionItem;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.ui.UiOptionItem;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.AppDialogPresenter;
+import com.liskovsoft.smartyoutubetv2.common.misc.FocusMode;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.dialogs.ATVBridgePresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.dialogs.AmazonBridgePresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.dialogs.AppUpdatePresenter;
@@ -183,6 +184,7 @@ public class AboutSettingsPresenter extends BasePresenter<Void> {
     }
 
     private void appendInstallBridge(AppDialogPresenter settingsPresenter) {
+        if (FocusMode.hideUpstreamBridgeInstaller(getContext())) return;
         OptionItem installBridgeOption = UiOptionItem.from(
                 getContext().getString(R.string.install_bridge),
                 option -> startBridgePresenter());

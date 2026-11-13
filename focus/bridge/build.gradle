@@ -21,6 +21,8 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+def focusBuild = (project.findProperty('focusBuild') ?: '1').toString().toInteger()
+
 android {
     namespace 'org.smarttube.focusbridge'
     compileSdkVersion 34
@@ -29,8 +31,8 @@ android {
         applicationId 'com.amazon.firetv.youtube'
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode (project.findProperty('focusBuild') ?: '1').toString().toInteger()
-        versionName "1.0.${project.findProperty('focusBuild') ?: '1'}"
+        versionCode focusBuild
+        versionName "1.0.${focusBuild}"
     }
 
     signingConfigs {

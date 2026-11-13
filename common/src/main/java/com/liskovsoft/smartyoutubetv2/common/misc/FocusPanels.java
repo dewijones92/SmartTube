@@ -49,7 +49,9 @@ public final class FocusPanels {
         long now = SystemClock.uptimeMillis();
         long position = player.getPositionMs();
 
-        if (sLastPositionMs >= 0 && position == sLastPositionMs && player.getPlayWhenReady()) {
+        boolean ended = player.getDurationMs() > 0 && position >= player.getDurationMs() - 1_000;
+
+        if (sLastPositionMs >= 0 && position == sLastPositionMs && player.getPlayWhenReady() && !ended) {
             if (sStalledSinceMs < 0) {
                 sStalledSinceMs = now - TICK_MS;
             }

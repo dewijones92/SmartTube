@@ -21,26 +21,36 @@ stick it would open the hidden upstream test copy, not Focus.
 
 ## Decision
 - **No flash after the prompt.** Yes, No and Kids now open their screen (search page, Home, Moomoo) first and close
-  the black prompt after, so nothing else is visible in between.
+  the black prompt only once it has drawn: for Yes, two frames after the search screen resumes (1.5 s fallback); for
+  No and Kids, which change the section behind the prompt, after 300 ms. Opening first and closing straight away still
+  showed about four frames of the browse screen on the emulator.
 - **Search page.** In focus mode a "Search" section sits first in the sidebar and is the boot section. Its page is
   upstream's settings-style tile grid with one tile, Search, which opens the search page. Back from search lands
   here. *Claude: reusing the settings grid rather than a new view.* A settings password, if one is ever set, also
   asks before this tile, because the grid's click handler checks it.
 - **History in Kids.** The Kids sidebar is Moomoo, then History, added even if History isn't pinned.
-- **Leftover player closed at the prompt.** A relaunch while a video was open left the player under the new
-  screen, so Back from search reopened it (seen on the stick: a kids' video resumed at 50 min). Any prompt choice now
-  finishes that player and removes it from SmartTube's screen stack. *Claude, not separately asked.*
+- **Leftover player off the Back stack.** A relaunch while a video was open left the player under the new screen, so
+  Back from search reopened it (seen on the stick: a kids' video resumed at 50 min). Any prompt choice now removes that
+  player from SmartTube's screen stack, so Back cannot reach it. It is not finished: finishing it makes SmartTube start
+  its parent (Browse) in front of the prompt, which is the flash this batch removes. *Claude, not separately asked.*
+- **No search in Kids, voice included.** Kids already hides the search buttons; a voice search arriving through the
+  bridge while Kids is on is now blocked too (`SearchPresenter` hook). *Claude, not separately asked.*
+- **Upstream's bridge installer hidden.** About › "Enable voice search" would install upstream's bridge over ours (it
+  only opens upstream's packages), so it is hidden in Focus.
 - **Voice bridge.** `focus/bridge` is a separate small app, package `com.amazon.firetv.youtube`, same intent filters
   as upstream's bridge. It forwards links unchanged and turns a bare search query into
-  `youtube://search?query=...&isVoice=true` (the form SmartTube already parses) for `org.smarttube.focus`. It is a
+  `youtube://search?query=...&isVoice=true` (the form SmartTube already parses) for `org.smarttube.focus`; a link
+  with no query of its own gives way to the spoken query extra. It is a
   standalone Gradle project (no change to upstream's `settings.gradle`), signed with the Focus key, built by the
   nightly in a step that cannot block Focus, and published as `smarttube_focus_voice_bridge.apk`. It is installed
   once by hand; the in-app updater does not update it.
 - **Cold search launch is distraction-free.** When the process starts from a search link (the bridge), focus mode
-  is switched on before the search opens; otherwise a cold link launch kept the stored full mode. Warm launches keep
+  is switched on as the app starts (the search screen opens just after, asynchronously); otherwise a cold link launch
+  kept the stored full mode. Warm launches keep
   the current mode as before. *Claude, not separately asked.*
 - **Panel pause (backlog item 1) is instrumented, not fixed.** `FocusPanels` logs position, play state and
-  loading for 8 s after an info or comments panel opens or closes, and says how long playback stood still, via
+  loading for 8 s after any side panel that shrinks the video opens or closes (info, comments, quality, speed and the
+  other `fitVideoIntoDialog` callers), ignoring a video that has simply ended, and says how long playback stood still, via
   one-line hooks in `BasePlayerController`'s fit-video runnables. The first measurement on .28 was invalid (see
   Consequences), so the fix waits for evidence from this build.
 

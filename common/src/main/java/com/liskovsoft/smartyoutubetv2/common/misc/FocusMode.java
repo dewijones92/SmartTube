@@ -1,11 +1,16 @@
 package com.liskovsoft.smartyoutubetv2.common.misc;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.SystemClock;
 import android.text.TextUtils;
+import android.view.View;
 import android.view.Window;
 
 import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
@@ -58,6 +63,11 @@ public final class FocusMode {
     private static volatile boolean sPromptShowing;
     private static volatile String sChoice;
     private static volatile boolean sLaunched;
+    private static final long PROMPT_CLOSE_FALLBACK_MS = 1500;
+    private static final long PROMPT_CLOSE_SAME_SCREEN_MS = 300;
+    private static final Handler sHandler = new Handler(Looper.getMainLooper());
+    private static AppDialogPresenter sClosePending;
+    private static long sChoiceAtMs;
 
     private FocusMode() {
     }
@@ -118,8 +128,8 @@ public final class FocusMode {
             closeLeftoverPlayer(context);
             setActive(context, true, "user chose Yes");
             FocusLog.d(TAG, "dewidebug landing: search page (user chose Yes), opened before the prompt closes");
+            closePromptWhenShown(dialog, PROMPT_CLOSE_FALLBACK_MS);
             SearchPresenter.instance(context).startSearch(null);
-            dialog.closeDialog();
         }));
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_no), option -> {
             sChoice = "No";
@@ -128,7 +138,7 @@ public final class FocusMode {
             setActive(context, false, "user chose No");
             FocusLog.d(TAG, "dewidebug landing: Home (user chose No), selected before the prompt closes");
             BrowsePresenter.instance(context).selectSection(MediaGroup.TYPE_HOME);
-            dialog.closeDialog();
+            closePromptWhenShown(dialog, PROMPT_CLOSE_SAME_SCREEN_MS);
         }));
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_kids), option -> {
             sChoice = "Kids";
@@ -137,7 +147,7 @@ public final class FocusMode {
             setKids(context, true);
             FocusLog.d(TAG, "dewidebug landing: Moomoo (user chose Kids), selected before the prompt closes");
             BrowsePresenter.instance(context).selectSection(Moomoo.SECTION_ID);
-            dialog.closeDialog();
+            closePromptWhenShown(dialog, PROMPT_CLOSE_SAME_SCREEN_MS);
         }));
         sPromptShowing = true;
         dialog.showDialog(context.getString(R.string.focus_mode_title), () -> {
@@ -150,24 +160,70 @@ public final class FocusMode {
         });
     }
 
-    private static void closeLeftoverPlayer(Context context) {
-        PlaybackPresenter playback = PlaybackPresenter.instance(context);
-        Object view = playback.getView();
+    private static void closePromptWhenShown(AppDialogPresenter dialog, long timeoutMs) {
+        sClosePending = dialog;
+        sChoiceAtMs = SystemClock.uptimeMillis();
+        sHandler.postDelayed(() -> closePendingPrompt("no new screen after " + timeoutMs + " ms"), timeoutMs);
+    }
 
-        if (view == null) {
-            FocusLog.d(TAG, "dewidebug no player left from before the prompt");
+    public static void onActivityResumed(Activity activity) {
+        if (sClosePending == null || activity == null || activity.getClass().getSimpleName().startsWith("AppDialogActivity")) {
             return;
         }
 
-        MotherActivity activity = ViewManager.getMotherActivity(view);
+        View decor = activity.getWindow() != null ? activity.getWindow().getDecorView() : null;
+        String name = activity.getClass().getSimpleName();
 
-        if (activity != null) {
-            ViewManager.instance(context).removeTop(activity);
+        if (decor == null) {
+            closePendingPrompt(name + " resumed without a window");
+            return;
         }
 
-        playback.forceFinish();
-        FocusLog.d(TAG, "dewidebug closed the player left from before the prompt (activity found=%s), so Back cannot reopen it",
-                activity != null);
+        decor.post(() -> decor.post(() -> closePendingPrompt(name + " drawn")));
+    }
+
+    private static void closePendingPrompt(String reason) {
+        AppDialogPresenter dialog = sClosePending;
+
+        if (dialog == null) {
+            return;
+        }
+
+        sClosePending = null;
+        dialog.closeDialog();
+        FocusLog.d(TAG, "dewidebug prompt closed %s ms after the choice: %s", SystemClock.uptimeMillis() - sChoiceAtMs, reason);
+    }
+
+    private static void closeLeftoverPlayer(Context context) {
+        Object view = PlaybackPresenter.instance(context).getView();
+        MotherActivity activity = view != null ? ViewManager.getMotherActivity(view) : null;
+
+        if (activity == null) {
+            FocusLog.d(TAG, "dewidebug no player left from before the prompt (view=%s)", view != null);
+            return;
+        }
+
+        ViewManager.instance(context).removeTop(activity);
+        FocusLog.d(TAG, "dewidebug player left from before the prompt taken off the Back stack, so Back cannot reopen it");
+    }
+
+    public static boolean blockSearch(String searchText) {
+        if (!sKids) {
+            return false;
+        }
+
+        FocusLog.d(TAG, "dewidebug search blocked in Kids mode: \"%s\"", searchText);
+        return true;
+    }
+
+    public static boolean hideUpstreamBridgeInstaller(Context context) {
+        boolean hide = context != null && context.getResources().getBoolean(R.bool.focus_mode_available);
+
+        if (hide) {
+            FocusLog.d(TAG, "dewidebug About: upstream voice bridge installer hidden (Focus has its own bridge)");
+        }
+
+        return hide;
     }
 
     public static void applyPromptBackground(Window window) {

@@ -20,6 +20,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.presenters.dialogs.menu.VideoMe
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.interfaces.VideoGroupPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.views.SearchView;
 import com.liskovsoft.smartyoutubetv2.common.misc.BrowseProcessorManager;
+import com.liskovsoft.smartyoutubetv2.common.misc.FocusMode;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
 import com.liskovsoft.smartyoutubetv2.common.prefs.AccountsData;
 import com.liskovsoft.smartyoutubetv2.common.utils.AppDialogUtil;
@@ -278,6 +279,7 @@ public class SearchPresenter extends BasePresenter<SearchView> implements VideoG
     }
 
     private void startSearch(String searchText, boolean isVoice, boolean startPlay) {
+        if (FocusMode.blockSearch(searchText)) return;
         mSearchText = searchText;
         mIsVoice = isVoice;
         mStartPlay = startPlay;

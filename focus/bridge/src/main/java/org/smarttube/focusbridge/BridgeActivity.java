@@ -38,6 +38,12 @@ public class BridgeActivity extends Activity {
         Uri data = incoming != null ? incoming.getData() : null;
         String query = incoming != null ? incoming.getStringExtra(SearchManager.QUERY) : null;
 
+        if (data != null && data.isHierarchical() && !TextUtils.isEmpty(query) && TextUtils.isEmpty(data.getQueryParameter("query"))
+                && TextUtils.isEmpty(data.getQueryParameter("q")) && TextUtils.isEmpty(data.getQueryParameter("search_query"))) {
+            Log.i(TAG, "dewidebug bridge: link " + data + " has no query, using the spoken query instead");
+            data = null;
+        }
+
         if (data != null) {
             target.setAction(Intent.ACTION_VIEW);
             target.setData(data);

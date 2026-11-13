@@ -107,6 +107,7 @@ public final class FocusSpeed {
 
             @Override
             public void onActivityResumed(Activity activity) {
+                FocusMode.onActivityResumed(activity);
             }
 
             @Override
