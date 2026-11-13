@@ -91,7 +91,10 @@ testing finds in one more push, not a build per change. Watch CI on the exact co
 - `common/.../misc/Moomoo.java` kids' section (ADR 0008)
 - `common/.../misc/AfrRestart.java` "Adjusting TV…" + restart after a frame-rate switch (ADR 0009)
 - `docs/BACKLOG.md` work Dewi has asked for, in order; no code for an item until he says go
-- `common/.../misc/FocusPanels.java` logs playback for 8 s around an info/comments panel (ADR 0014)
+- `common/.../misc/FocusPanels.java` logs playback for 8 s around an info/comments panel (ADR 0014) and undoes a
+  pause that follows a panel closing (ADR 0015)
+- `common/.../misc/FocusTrace.java` logs every play/pause with its caller, player state, keys and activity lifecycle
+  (ADR 0015): `adb logcat | grep 'dewidebug \(player\|key\|life\|panel\)'`
 - `focus/bridge/` separate Alexa voice-search bridge app, `com.amazon.firetv.youtube` -> Focus (ADR 0014); built by
   `./gradlew -p focus/bridge assembleRelease`
 - `smarttubetv/src/stfocus/` flavour resources: icons, colours, update URL

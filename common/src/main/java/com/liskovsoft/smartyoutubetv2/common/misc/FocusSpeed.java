@@ -97,25 +97,30 @@ public final class FocusSpeed {
         ((Application) context.getApplicationContext()).registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
             @Override
             public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+                FocusTrace.onLifecycle(activity, "created");
                 remember(activity);
             }
 
             @Override
             public void onActivityStarted(Activity activity) {
+                FocusTrace.onLifecycle(activity, "started");
                 remember(activity);
             }
 
             @Override
             public void onActivityResumed(Activity activity) {
+                FocusTrace.onLifecycle(activity, "resumed");
                 FocusMode.onActivityResumed(activity);
             }
 
             @Override
             public void onActivityPaused(Activity activity) {
+                FocusTrace.onLifecycle(activity, "paused");
             }
 
             @Override
             public void onActivityStopped(Activity activity) {
+                FocusTrace.onLifecycle(activity, "stopped");
             }
 
             @Override
@@ -124,6 +129,7 @@ public final class FocusSpeed {
 
             @Override
             public void onActivityDestroyed(Activity activity) {
+                FocusTrace.onLifecycle(activity, "destroyed");
                 forget(activity);
             }
         });

@@ -5,8 +5,8 @@ When an item ships, remove it here and record the decision in an ADR.
 
 ## 1. Video stutters when the info or comments panel closes
 
-**Asked:** Dewi, 2026-11-13. **Status:** in progress (batch 5, ADR 0014): instrumented with `FocusPanels`, cause
-not yet proven.
+**Asked:** Dewi, 2026-11-13. **Status:** in progress: reproduced 2026-11-13 22:58 (a real pause); batch 6 (ADR 0015)
+adds a resume guard and logs the pause's caller. Remove this item once the batch 6 build is verified on the TV.
 
 **What happens:** while a video is playing, pressing the info icon opens the info panel at the side. Closing it
 makes the video stop, then resume after a gap of a few seconds. Comments do the same: they open at the side, and
@@ -28,3 +28,8 @@ closing them restarts playback oddly.
   the first measurement was spoilt by DPAD_RIGHT seeking. Next: read `FocusPanels` lines from the batch 5 build.
 - Batch 5 ships `FocusPanels`: next time it happens on the TV, note the time; `adb logcat | grep 'dewidebug panel'`
   shows position and play state every 500 ms for 8 s after the panel opens and closes.
+- 2026-11-13 22:58 REPRODUCED on the stick (TV on, .37, tennis cCQS2fUyDGk): info panel open 6 s, playback fine
+  (position +500 ms per tick, playWhenReady=true). Within 500 ms of the panel closing (Back), playWhenReady=false,
+  loading=false, engineBlocked=false, position frozen for the whole 8 s window, and still paused at 3:02 a minute later.
+  So it is a PAUSE call, not a stall or rebuffer. mFitVideoFinish only resets zoom/gravity. Suspect the Back that closes
+  the dialog also reaching the player. Next: log who calls setPlayWhenReady(false)/pause around the close.

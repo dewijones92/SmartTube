@@ -7,6 +7,7 @@ import android.view.KeyEvent;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.SearchPresenter;
 import com.liskovsoft.smartyoutubetv2.common.autoframerate.ModeSyncManager;
+import com.liskovsoft.smartyoutubetv2.common.misc.FocusTrace;
 import com.liskovsoft.smartyoutubetv2.common.misc.GlobalKeyTranslator;
 import com.liskovsoft.smartyoutubetv2.common.misc.MotherActivity;
 import com.liskovsoft.smartyoutubetv2.common.misc.PlayerKeyTranslator;
@@ -49,6 +50,7 @@ public abstract class LeanbackActivity extends MotherActivity {
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         Log.d(TAG, event);
+        FocusTrace.onKey(this, getClass().getSimpleName(), event);
 
         KeyEvent newEvent = mGlobalKeyTranslator.translate(event);
         return super.dispatchKeyEvent(newEvent);

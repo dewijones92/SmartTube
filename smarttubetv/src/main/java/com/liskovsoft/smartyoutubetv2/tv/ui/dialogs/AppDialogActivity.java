@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment;
 import com.liskovsoft.sharedutils.helpers.KeyHelpers;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
+import com.liskovsoft.smartyoutubetv2.common.misc.FocusTrace;
 import com.liskovsoft.smartyoutubetv2.common.app.views.PlaybackView;
 import com.liskovsoft.smartyoutubetv2.common.app.views.ViewManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.FocusMode;
@@ -69,6 +70,7 @@ public class AppDialogActivity extends MotherActivity {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+        FocusTrace.onKey(this, "AppDialogActivity", event);
         //if (KeyHelpers.isConfirmKey(event.getKeyCode()) && !event.isLongPress()) {
         //    return true;
         //}
