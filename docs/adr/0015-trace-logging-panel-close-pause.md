@@ -70,7 +70,12 @@ the fork's first version (32.74-focus.41 to .43).
   display mode" like an AFR switch in that dispatcher; it needs the same evidence from an upstream build (rule 2).
 
 ## Consequences
-- "Alexa, pause" within 4 s of closing a panel, with no remote key pressed, would be ignored once; the log says so.
+- With the PR's code (from 32.74-focus.44): a media-session pause (voice, Bluetooth, cast) within 3 s of the player
+  resuming is ignored while AFR is on. Remote keys and on-screen buttons go through the player, not the media session,
+  so they are unaffected. With AFR off there is no mode switch and no block. The log shows `media session asks
+  playWhenReady=false` with no `playWhenReady -> false` after it when the pause is ignored.
+- (32.74-focus.41 to .43 only) "Alexa, pause" within 4 s of closing a panel, with no remote key pressed, was ignored
+  once.
 - A Home press with a return inside 3 s of a panel closing could be resumed by the guard (third review's note).
 - Logcat gets more lines per playback: a handful per play/pause and per key press. None fire per frame.
 - If the guard's exclusions miss a deliberate pause (for example a pause from somewhere new within 3 s of closing a
@@ -88,3 +93,7 @@ On the stick, TV on, SmartTube player volume 0%, tennis video `cCQS2fUyDGk` (108
 - 32.74-focus.41, comments panel (23:42:20): same, ignored 451 ms after the close, playback continued.
 - No `FATAL EXCEPTION` across the runs. First launch after `adb install -r` once took ~50 s to start playback (main
   thread busy, keys swallowed); warm starts were ~6 s including the 3 s AFR pause.
+- 32.74-focus.44 (the upstream PR's code, cherry-picked unchanged), 2026-11-14 04:55: info panel closed, media-session
+  pause 530 ms later reached no `playWhenReady -> false`, position kept climbing (41.1 s -> 48.6 s); comments panel,
+  same at 494 ms; the remote's Play/Pause 2.5 s after a close still paused and stayed paused. No `FATAL EXCEPTION`.
+  Posted as the end-to-end evidence comment on yuliskov/SmartTube#6473.
