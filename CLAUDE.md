@@ -19,6 +19,8 @@ in the living room. Upstream SmartTube is merged in every night, so keep our foo
    (Dewi, 2026-11-13). A feature with no attachable evidence isn't ready to offer upstream. **Never open an upstream
    PR until its exact build has passed an end-to-end run on the device** (Dewi, 2026-11-14, after PR #6473 went up with
    evidence from the fork's equivalent change only). If the stick or TV isn't free, the PR waits.
+   **Every upstream PR gets a comment stating it was tested end to end, with the evidence** (device, build, steps,
+   logcat lines, screenshots), posted once that run is done (Dewi, 2026-11-14: "this is important from now on").
    Measure the change **on its own** (A/B against upstream, same videos, 5 runs each) before claiming a number:
    PR #6394 claimed a saving that came from other changes and measured as zero, so we closed it.
 3. **Record decisions as ADRs** in `docs/adr/` (next number, add to the README table, say who decided).
