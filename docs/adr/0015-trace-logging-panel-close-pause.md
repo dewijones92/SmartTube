@@ -49,7 +49,15 @@ session (`MediaSessionConnector` → upstream's `PlaybackFragment` control dispa
 07.497). Upstream already blocks media-session play/pause for 5 s after an AFR switch for exactly this reason ("window
 has different mode"), but a panel close is not an AFR switch, so its timestamp is old and the pause gets through.
 
-## Source fix
+## Amended 2026-11-14: the fork runs the upstream PR's exact code
+Decided by Dewi ("any way we can do same code?") on Claude's recommendation. The fork cherry-picks the commit sent
+upstream as yuliskov/SmartTube#6473: `PlaybackFragment` records when it resumes, and with AFR on its control dispatcher
+ignores a media-session pause for 3 s after that. `FocusPanels.ignoreMediaSessionPause` is gone; the hook in that
+dispatcher is now `FocusPanels.logMediaSessionRequest`, log-only, so the stick logs show each request and the PR's
+check decides. When upstream merges #6473 the nightly sync absorbs the identical lines. The section below describes
+the fork's first version (32.74-focus.41 to .43).
+
+## Source fix (first version, superseded by the amendment above)
 - One line at the top of upstream's control dispatcher: `FocusPanels.ignoreMediaSessionPause` ignores a media-session
   **pause** within 4 s of a panel closing when the user has pressed no pause-type key since (OK, Enter, space, gamepad
   A, headset hook, media play-pause, play, pause and stop; D-pad moves don't count, so a seek right after closing still

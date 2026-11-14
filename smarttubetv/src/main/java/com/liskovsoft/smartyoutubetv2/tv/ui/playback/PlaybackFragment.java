@@ -673,7 +673,7 @@ public class PlaybackFragment extends SeekModePlaybackFragment implements Playba
         mMediaSessionConnector.setControlDispatcher(new DefaultControlDispatcher() {
             @Override
             public boolean dispatchSetPlayWhenReady(Player player, boolean playWhenReady) {
-                if (FocusPanels.ignoreMediaSessionPause(getContext(), playWhenReady)) return false;
+                FocusPanels.logMediaSessionRequest(getContext(), playWhenReady);
                 // Fix exoplayer pause after activity is resumed (AFR switching).
                 // It's tied to activity state transitioning because window has different mode.
                 // NOTE: may be a problems with background playback or bluetooth button events
