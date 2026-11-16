@@ -22,3 +22,4 @@ open to challenge.
 | [0013](0013-hidden-prefetch-search-first.md) | Hidden prefetch behind the prompt; distraction-free opens a plain search page | Accepted; boot section amended by 0014 |
 | [0014](0014-batch5-search-page-voice-bridge.md) | No flash after the prompt, Search page, History in Kids, Alexa voice bridge | Accepted |
 | [0015](0015-trace-logging-panel-close-pause.md) | Trace logging (play/pause callers, keys, lifecycle); undo the pause after a panel closes | Accepted |
+| [0016](0016-full-homepage-no-lands-home-panel-close-mode.md) | ❌ Full homepage section, "No" lands on Home, no refresh-rate switch when a panel closes | Accepted |

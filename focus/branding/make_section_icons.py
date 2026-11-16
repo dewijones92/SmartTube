@@ -8,6 +8,7 @@ OUT = ROOT / "common/src/main/res/drawable-nodpi"
 SCALE = 4
 WHITE = (255, 255, 255, 255)
 CLEAR = (0, 0, 0, 0)
+RED = (229, 57, 53, 255)
 
 
 def canvas(size):
@@ -53,7 +54,16 @@ def focus_settings():
     save(img, 302, "settings_focus.png")
 
 
+def full_home():
+    img, d, u = canvas(301)
+    stroke = round(42 * u)
+    d.line([(70 * u, 70 * u), (231 * u, 231 * u)], fill=RED, width=stroke)
+    d.line([(231 * u, 70 * u), (70 * u, 231 * u)], fill=RED, width=stroke)
+    save(img, 301, "icon_full_home.png")
+
+
 if __name__ == "__main__":
     tennis()
     continue_watching()
     focus_settings()
+    full_home()

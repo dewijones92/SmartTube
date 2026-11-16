@@ -62,6 +62,7 @@ public final class FocusMode {
     private static volatile boolean sKids;
     private static volatile boolean sPromptShowing;
     private static volatile String sChoice;
+    private static volatile boolean sHomePending;
     private static volatile boolean sLaunched;
     private static final long PROMPT_CLOSE_FALLBACK_MS = 1500;
     private static final long PROMPT_CLOSE_SAME_SCREEN_MS = 300;
@@ -125,6 +126,7 @@ public final class FocusMode {
         AppDialogPresenter dialog = AppDialogPresenter.instance(context);
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_yes), option -> {
             sChoice = "Yes";
+            sHomePending = false;
             closeLeftoverPlayer(context);
             setActive(context, true, "user chose Yes");
             FocusLog.d(TAG, "dewidebug landing: search page (user chose Yes), opened before the prompt closes");
@@ -138,10 +140,13 @@ public final class FocusMode {
             setActive(context, false, "user chose No");
             FocusLog.d(TAG, "dewidebug landing: Home (user chose No), selected before the prompt closes");
             BrowsePresenter.instance(context).selectSection(MediaGroup.TYPE_HOME);
+            sHomePending = true;
+            FocusLog.d(TAG, "dewidebug No: section after selecting Home is %s", describeSection(context));
             closePromptWhenShown(dialog, PROMPT_CLOSE_SAME_SCREEN_MS);
         }));
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_kids), option -> {
             sChoice = "Kids";
+            sHomePending = false;
             closeLeftoverPlayer(context);
             setActive(context, true, "user chose Kids");
             setKids(context, true);
@@ -167,6 +172,18 @@ public final class FocusMode {
     }
 
     public static void onActivityResumed(Activity activity) {
+        if (sHomePending && activity != null && activity.getClass().getSimpleName().startsWith("BrowseActivity")) {
+            sHomePending = false;
+            View browseDecor = activity.getWindow() != null ? activity.getWindow().getDecorView() : null;
+            Context appContext = activity.getApplicationContext();
+
+            if (browseDecor != null) {
+                browseDecor.post(() -> browseDecor.post(() -> ensureHomeAfterNo(appContext)));
+            } else {
+                ensureHomeAfterNo(appContext);
+            }
+        }
+
         if (sClosePending == null || activity == null || activity.getClass().getSimpleName().startsWith("AppDialogActivity")) {
             return;
         }
@@ -180,6 +197,24 @@ public final class FocusMode {
         }
 
         decor.post(() -> decor.post(() -> closePendingPrompt(name + " drawn")));
+    }
+
+    private static void ensureHomeAfterNo(Context context) {
+        BrowseSection current = BrowsePresenter.instance(context).getCurrentSection();
+
+        if (current != null && current.getId() == MediaGroup.TYPE_HOME) {
+            FocusLog.d(TAG, "dewidebug No: browse screen back on Home as chosen");
+            return;
+        }
+
+        FocusLog.d(TAG, "dewidebug No: browse screen came back on %s instead of Home, selecting Home again", describeSection(context));
+        BrowsePresenter.instance(context).selectSection(MediaGroup.TYPE_HOME);
+        FocusLog.d(TAG, "dewidebug No: section now %s", describeSection(context));
+    }
+
+    private static String describeSection(Context context) {
+        BrowseSection current = BrowsePresenter.instance(context).getCurrentSection();
+        return current == null ? "none" : current.getId() + " (" + current.getTitle() + ")";
     }
 
     private static void closePendingPrompt(String reason) {
@@ -294,6 +329,7 @@ public final class FocusMode {
 
         if (sActive && FocusSections.isRegistered()) {
             FocusSections.insertSearchFirst(visible);
+            FocusSections.insertFullHomeBeforeSettings(visible);
         }
 
         return visible;

@@ -24,12 +24,14 @@ final class FocusSections {
     static final int TENNIS_ID = 9002;
     static final int CONTINUE_ID = 9003;
     static final int SEARCH_ID = 9004;
+    static final int FULL_HOME_ID = 9005;
     private static final String TENNIS_TV = "UCbcxFkd6B9xUU54InHv4Tig";
     private static final int MIN_PERCENT = 5;
     private static final int MAX_PERCENT = 95;
     private static Video sTennisItem;
     private static Video sContinueItem;
     private static Video sSearchItem;
+    private static Video sFullHomeItem;
     private static volatile boolean sRegistered;
 
     private FocusSections() {
@@ -48,7 +50,9 @@ final class FocusSections {
         rows.put(TENNIS_ID, RxHelper.fromCallable(FocusSections::loadTennis));
         sections.put(CONTINUE_ID, new BrowseSection(CONTINUE_ID, "Continue watching", BrowseSection.TYPE_ROW, R.drawable.icon_continue, true));
         rows.put(CONTINUE_ID, RxHelper.fromCallable(FocusSections::loadContinue));
-        FocusLog.d(TAG, "dewidebug Search, Tennis and Continue watching sections registered");
+        sections.put(FULL_HOME_ID, new BrowseSection(FULL_HOME_ID, "\u274C Full homepage", BrowseSection.TYPE_ROW, R.drawable.icon_full_home, false));
+        rows.put(FULL_HOME_ID, FocusRows.content().getHomeObserve());
+        FocusLog.d(TAG, "dewidebug Search, Tennis, Continue watching and Full homepage sections registered");
     }
 
     static boolean isRegistered() {
@@ -62,6 +66,25 @@ final class FocusSections {
         }
 
         visible.add(0, sSearchItem);
+    }
+
+    static void insertFullHomeBeforeSettings(List<Video> visible) {
+        if (sFullHomeItem == null) {
+            sFullHomeItem = new Video();
+            sFullHomeItem.sectionId = FULL_HOME_ID;
+        }
+
+        int index = visible.size();
+
+        for (int i = 0; i < visible.size(); i++) {
+            Video item = visible.get(i);
+            if (item != null && item.sectionId == MediaGroup.TYPE_SETTINGS) {
+                index = i;
+                break;
+            }
+        }
+
+        visible.add(index, sFullHomeItem);
     }
 
     static void insertAfter(List<Video> visible, int afterSectionId) {
