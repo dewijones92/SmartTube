@@ -28,6 +28,8 @@ public final class FocusTrace {
     private static boolean sLastPlayWhenReady;
     private static int sLastState = -1;
     private static String sResumedActivity = "";
+    private static String sLastPausedActivity = "";
+    private static String sBelowDialog = "";
     private static boolean sSystemWatched;
 
     private FocusTrace() {
@@ -74,9 +76,15 @@ public final class FocusTrace {
         String name = activity.getClass().getSimpleName();
 
         if ("resumed".equals(event)) {
+            if (name.startsWith("AppDialogActivity")) {
+                sBelowDialog = sLastPausedActivity;
+            }
             sResumedActivity = name;
-        } else if ("paused".equals(event) && name.equals(sResumedActivity)) {
-            sResumedActivity = "";
+        } else if ("paused".equals(event)) {
+            sLastPausedActivity = name;
+            if (name.equals(sResumedActivity)) {
+                sResumedActivity = "";
+            }
         }
 
         FocusLog.d(TAG, "dewidebug life %s %s task=%s finishing=%s",
@@ -159,6 +167,10 @@ public final class FocusTrace {
 
     static String resumedActivity() {
         return sResumedActivity;
+    }
+
+    static String belowDialog() {
+        return sBelowDialog;
     }
 
     static String keyName(int code) {

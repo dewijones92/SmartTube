@@ -1,5 +1,8 @@
 package com.liskovsoft.smartyoutubetv2.common.misc;
 
+import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.ActivityOptions;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
@@ -7,6 +10,8 @@ import android.os.SystemClock;
 import android.view.KeyEvent;
 
 import com.liskovsoft.smartyoutubetv2.common.R;
+import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
+import com.liskovsoft.smartyoutubetv2.common.app.views.ViewManager;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerEngine;
 
 public final class FocusPanels {
@@ -54,6 +59,42 @@ public final class FocusPanels {
         FocusLog.d(TAG, "dewidebug panel %s: %s", event, describe(player));
         sHandler.removeCallbacks(sTick);
         sHandler.postDelayed(sTick, TICK_MS);
+    }
+
+    public static void onPanelBack(Activity dialog, boolean backPressed) {
+        if (dialog == null || !FocusTrace.isEnabled(dialog)) {
+            return;
+        }
+
+        String below = FocusTrace.belowDialog();
+        String skip = null;
+
+        if (!backPressed) {
+            skip = "it was not closed with Back";
+        } else if (!FocusSpeed.isStickyModeActive()) {
+            skip = "no frame-rate mode is held";
+        } else if (!"PlaybackActivity".equals(below)) {
+            skip = "the screen under it is " + below + ", not the player";
+        }
+
+        Activity player = skip == null ? ViewManager.getMotherActivity(PlaybackPresenter.instance(dialog).getView()) : null;
+
+        if (skip == null && player == null) {
+            skip = "the player screen is gone";
+        }
+
+        if (skip != null) {
+            FocusLog.d(TAG, "dewidebug panel closing normally because %s", skip);
+            return;
+        }
+
+        try {
+            ActivityManager manager = (ActivityManager) dialog.getSystemService(Context.ACTIVITY_SERVICE);
+            manager.moveTaskToFront(player.getTaskId(), 0, ActivityOptions.makeCustomAnimation(dialog, 0, 0).toBundle());
+            FocusLog.d(TAG, "dewidebug panel closing: player task %s brought to the front first, with no animation", player.getTaskId());
+        } catch (RuntimeException e) {
+            FocusLog.e(TAG, "dewidebug panel closing: could not bring the player forward first: %s", e);
+        }
     }
 
     public static void logMediaSessionRequest(Context context, boolean playWhenReady) {
