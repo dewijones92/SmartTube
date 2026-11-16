@@ -14,7 +14,8 @@ in the living room. Upstream SmartTube is merged in every night, so keep our foo
    already passed rule 6 in this fork, and its description says so plainly: device, build, what happy path was
    run, what was checked (screen, logcat, timings). If the upstream branch's code differs from the fork's
    (no flavour gate, different call), test the exact upstream build too, or say it wasn't (Dewi, 2026-10-31).
-   Actively try to upstream the sensible changes, and attach the end-to-end evidence to the PR itself: screenshots
+   Upstream only what is genuinely useful to other users, and cheaply: no extra investigation just for upstream, and
+   fork-only work is never offered (Dewi, 2026-11-16). For what is offered, attach the end-to-end evidence to the PR itself: screenshots
    or a screen recording of the happy path, and the relevant logcat lines, from the build the PR describes
    (Dewi, 2026-11-13). A feature with no attachable evidence isn't ready to offer upstream. **Never open an upstream
    PR until its exact build has passed an end-to-end run on the device** (Dewi, 2026-11-14, after PR #6473 went up with

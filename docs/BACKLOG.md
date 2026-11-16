@@ -23,6 +23,9 @@ SmartTube's search box opens and whether Fire OS dictation fills it.
 audio drops ~1.5 s and the picture stands still ~1 s. Playback itself keeps going (ADR 0015 fixed the real pause).
 
 **Known:** not a window's preferred mode (player and panel windows both ask for mode 5 throughout); removing the close
-animation did not help. **Next:** capture `dumpsys display` (DisplayModeDirector votes) and SurfaceFlinger frame-rate
+animation did not help; turning ALL system animations off (2026-11-16 13:09) did not help either. `dumpsys display`
+through the close shows DisplayModeDirector's app-requested mode flip from 5 (50 Hz) to 3 (59.94) within ~40 ms of
+the panel closing and back ~0.4 s later: for a moment no window's request counts, and the 60 Hz default wins.
+Unproven idea: Fire OS takes the mode from the FOCUSED window, and focus is briefly nobody's during the task switch. **Next:** capture `dumpsys display` (DisplayModeDirector votes) and SurfaceFlinger frame-rate
 votes during the close; check whether the video surface's `setFrameRate` vote is cleared and re-set when the player
 resumes; test whether it happens with the stick's own "match frame rate" instead of SmartTube's AFR.
