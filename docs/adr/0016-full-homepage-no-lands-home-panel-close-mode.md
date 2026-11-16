@@ -22,18 +22,21 @@
 ## Decision
 - **❌ Full homepage.** `FocusSections` registers section 9005, "❌ Full homepage" with a red X icon
   (`icon_full_home.png`, `focus/branding/make_section_icons.py`), whose rows come from the same
-  `ContentService.getHomeObserve()` upstream uses for Home, so the content is exactly SmartTube's Home. It is added
-  only in distraction-free mode, just above Settings; Kids mode never shows it, and "No" mode has the normal Home.
-- **"No" lands on Home.** After "No", when the browse screen resumes (two frames after, like the prompt close in
-  ADR 0014), `FocusMode` checks the selected section and selects Home again if it isn't Home. Each step is logged with
-  the section it found, so the cause shows in logcat.
+  `ContentService.getHomeObserve()` upstream uses for Home. A one-line hook in `BrowsePresenter.isHomeSection()` treats
+  it as Home, so upstream's Home row filter (Primetime, News and similar rows removed) and its 3-hour auto-refresh
+  apply too. It is added only in distraction-free mode, just above Settings; Kids mode never shows it, and "No" mode
+  has the normal Home.
+- **"No" lands on Home.** After "No", if the browse screen resumes within 5 s, `FocusMode` waits 800 ms (the sidebar's
+  selection callback lands late) and selects Home again if something else is showing, logging what it found. A later
+  resume, or switching back to focus mode, cancels it, so it never overrides a section the user picked.
 - **No animation when a panel closes while a frame-rate mode is held.** A one-line hook after `finishReally()` in
   `AppDialogActivity.finish()` calls `FocusPanels.skipCloseAnimation`, which calls `overridePendingTransition(0, 0)`
-  when the sticky AFR mode is active (ADR 0011). Without the animation the player's 50 Hz request is never ignored.
-  Logged either way.
+  when the sticky AFR mode is active (ADR 0011) and a player is underneath. Without the animation the player's 50 Hz
+  request is never ignored. Logged either way.
 
 ## Consequences
-- Panels and other SmartTube dialogs close instantly, with no fade, while an AFR mode is held.
+- SmartTube dialogs opened over the player close instantly, with no fade, once an AFR mode has been used (the dialog
+  theme already has no window animation, so the visible change is small).
 - Upstream: the panel-close switch is upstream behaviour (any AFR user with a dialog in its own task); a PR candidate
   once proven on the TV (rule 2: exact build, evidence comment).
 

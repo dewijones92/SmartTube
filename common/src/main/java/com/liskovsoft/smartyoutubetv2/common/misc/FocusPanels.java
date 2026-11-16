@@ -8,6 +8,7 @@ import android.os.SystemClock;
 import android.view.KeyEvent;
 
 import com.liskovsoft.smartyoutubetv2.common.R;
+import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerEngine;
 
 public final class FocusPanels {
@@ -62,8 +63,8 @@ public final class FocusPanels {
             return;
         }
 
-        if (!FocusSpeed.isStickyModeActive()) {
-            FocusLog.d(TAG, "dewidebug panel window closing with its normal animation: no frame-rate mode is held");
+        if (!FocusSpeed.isStickyModeActive() || PlaybackPresenter.instance(activity).getView() == null) {
+            FocusLog.d(TAG, "dewidebug panel window closing with its normal animation: no player with a frame-rate mode underneath");
             return;
         }
 

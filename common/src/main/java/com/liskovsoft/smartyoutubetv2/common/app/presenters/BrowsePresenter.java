@@ -1083,7 +1083,7 @@ public class BrowsePresenter extends BasePresenter<BrowseView> implements Sectio
     }
 
     public boolean isHomeSection() {
-        return isSection(MediaGroup.TYPE_HOME);
+        return isSection(MediaGroup.TYPE_HOME) || FocusMode.isFullHomeSection(mCurrentSection);
     }
 
     public boolean isHistorySection() {

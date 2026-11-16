@@ -62,7 +62,9 @@ public final class FocusMode {
     private static volatile boolean sKids;
     private static volatile boolean sPromptShowing;
     private static volatile String sChoice;
-    private static volatile boolean sHomePending;
+    private static volatile long sHomePendingUntilMs = -1;
+    private static final long HOME_PENDING_MS = 5_000;
+    private static final long HOME_CHECK_DELAY_MS = 800;
     private static volatile boolean sLaunched;
     private static final long PROMPT_CLOSE_FALLBACK_MS = 1500;
     private static final long PROMPT_CLOSE_SAME_SCREEN_MS = 300;
@@ -126,7 +128,7 @@ public final class FocusMode {
         AppDialogPresenter dialog = AppDialogPresenter.instance(context);
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_yes), option -> {
             sChoice = "Yes";
-            sHomePending = false;
+            sHomePendingUntilMs = -1;
             closeLeftoverPlayer(context);
             setActive(context, true, "user chose Yes");
             FocusLog.d(TAG, "dewidebug landing: search page (user chose Yes), opened before the prompt closes");
@@ -140,13 +142,12 @@ public final class FocusMode {
             setActive(context, false, "user chose No");
             FocusLog.d(TAG, "dewidebug landing: Home (user chose No), selected before the prompt closes");
             BrowsePresenter.instance(context).selectSection(MediaGroup.TYPE_HOME);
-            sHomePending = true;
-            FocusLog.d(TAG, "dewidebug No: section after selecting Home is %s", describeSection(context));
+            sHomePendingUntilMs = SystemClock.uptimeMillis() + HOME_PENDING_MS;
             closePromptWhenShown(dialog, PROMPT_CLOSE_SAME_SCREEN_MS);
         }));
         dialog.appendSingleButton(UiOptionItem.from(context.getString(R.string.focus_mode_kids), option -> {
             sChoice = "Kids";
-            sHomePending = false;
+            sHomePendingUntilMs = -1;
             closeLeftoverPlayer(context);
             setActive(context, true, "user chose Kids");
             setKids(context, true);
@@ -172,15 +173,15 @@ public final class FocusMode {
     }
 
     public static void onActivityResumed(Activity activity) {
-        if (sHomePending && activity != null && activity.getClass().getSimpleName().startsWith("BrowseActivity")) {
-            sHomePending = false;
-            View browseDecor = activity.getWindow() != null ? activity.getWindow().getDecorView() : null;
+        if (sHomePendingUntilMs > 0 && activity != null && activity.getClass().getSimpleName().startsWith("BrowseActivity")) {
+            boolean inTime = SystemClock.uptimeMillis() <= sHomePendingUntilMs;
+            sHomePendingUntilMs = -1;
             Context appContext = activity.getApplicationContext();
 
-            if (browseDecor != null) {
-                browseDecor.post(() -> browseDecor.post(() -> ensureHomeAfterNo(appContext)));
+            if (inTime) {
+                new Handler(Looper.getMainLooper()).postDelayed(() -> ensureHomeAfterNo(appContext), HOME_CHECK_DELAY_MS);
             } else {
-                ensureHomeAfterNo(appContext);
+                FocusLog.d(TAG, "dewidebug No: browse screen resumed too late to be the landing, leaving the section alone");
             }
         }
 
@@ -302,6 +303,10 @@ public final class FocusMode {
         FocusPrefetch.invalidateAll("refresh requested");
     }
 
+    public static boolean isFullHomeSection(BrowseSection section) {
+        return section != null && section.getId() == FocusSections.FULL_HOME_ID;
+    }
+
     public static List<Video> filterSections(List<Video> items) {
         if (items == null) {
             return null;
@@ -391,6 +396,10 @@ public final class FocusMode {
     private static void setActive(Context context, boolean active, String reason) {
         boolean changed = sActive != active;
         sActive = active;
+
+        if (active) {
+            sHomePendingUntilMs = -1;
+        }
         FocusLog.d(TAG, "dewidebug active=%s changed=%s reason=%s", active, changed, reason);
 
         applyShortsHiding(context, active);
