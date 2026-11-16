@@ -26,6 +26,9 @@ audio drops ~1.5 s and the picture stands still ~1 s. Playback itself keeps goin
 animation did not help; turning ALL system animations off (2026-11-16 13:09) did not help either. `dumpsys display`
 through the close shows DisplayModeDirector's app-requested mode flip from 5 (50 Hz) to 3 (59.94) within ~40 ms of
 the panel closing and back ~0.4 s later: for a moment no window's request counts, and the 60 Hz default wins.
-Unproven idea: Fire OS takes the mode from the FOCUSED window, and focus is briefly nobody's during the task switch. **Next:** capture `dumpsys display` (DisplayModeDirector votes) and SurfaceFlinger frame-rate
+Disproved 2026-11-16 13:39 (32.77-focus.53, branch `batch9`, not shipped): bringing the player's task to the front
+(moveTaskToFront, no animation) BEFORE the panel finishes; the switch still happened (config 33 then 28). Amazon's docs
+promise no switch when both screens prefer the same mode, which looks broken here. Remaining routes: show panels inside
+the player window (big upstream change), report it to Amazon, or turn AFR off. Parked by default. **Next:** capture `dumpsys display` (DisplayModeDirector votes) and SurfaceFlinger frame-rate
 votes during the close; check whether the video surface's `setFrameRate` vote is cleared and re-set when the player
 resumes; test whether it happens with the stick's own "match frame rate" instead of SmartTube's AFR.
