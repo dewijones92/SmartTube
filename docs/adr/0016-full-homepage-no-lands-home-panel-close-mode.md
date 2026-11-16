@@ -1,4 +1,4 @@
-# 0016. Batch 8: a "❌ Full homepage" section, "No" lands on Home, no refresh-rate switch when a panel closes
+# 0016. Batch 8: a "❌ Full homepage" section, "No" lands on Home (panel-close refresh switch still open)
 
 - Status: Accepted
 - Date: 2026-11-16
@@ -16,8 +16,7 @@
   moment the player resumed, then back to 50 Hz (config 16) 0.46 s later; HDMI audio dropped about 1.5 s and the
   picture stood still about 1 s. With the panel open, `dumpsys window` showed both SmartTube windows asking for mode 5
   (50 Hz), so nothing of ours reset the mode. Android 11's refresh-rate policy ignores a window's preferred mode while
-  it is animating; closing the panel animates a task switch, so for the length of the animation the only window left
-  is the launcher, at the default 59.94 Hz.
+  it is animating, which looked like the cause (disproved below).
 
 ## Decision
 - **❌ Full homepage.** `FocusSections` registers section 9005, "❌ Full homepage" with a red X icon
@@ -29,16 +28,20 @@
 - **"No" lands on Home.** After "No", if the browse screen resumes within 5 s, `FocusMode` waits 800 ms (the sidebar's
   selection callback lands late) and selects Home again if something else is showing, logging what it found. A later
   resume, or switching back to focus mode, cancels it, so it never overrides a section the user picked.
-- **No animation when a panel closes while a frame-rate mode is held.** A one-line hook after `finishReally()` in
-  `AppDialogActivity.finish()` calls `FocusPanels.skipCloseAnimation`, which calls `overridePendingTransition(0, 0)`
-  when the sticky AFR mode is active (ADR 0011) and a player is underneath. Without the animation the player's 50 Hz
-  request is never ignored. Logged either way.
+- **Panel-close refresh-rate switch: not fixed in this batch.** First hypothesis (Android ignores an animating window's
+  preferred mode) was tested and disproved on the stick, 32.76-focus.50, 11:49: with the close animation removed
+  (`overridePendingTransition(0, 0)`, logged as applied) the TV still switched to config 33 (59.94 Hz) 100 ms after the
+  close and back to config 28 (50 Hz) 0.46 s later. Polling `dumpsys window` through the close showed the player window
+  asking for `preferredDisplayMode=5` the whole time and the panel window too until it went, so no window attribute
+  asks for 59.94. The change was removed. Next suspects: the video surface's own frame-rate vote when the player
+  resumes, or Amazon's HDMI handling. Carried to the backlog.
 
 ## Consequences
-- SmartTube dialogs opened over the player close instantly, with no fade, once an AFR mode has been used (the dialog
-  theme already has no window animation, so the visible change is small).
-- Upstream: the panel-close switch is upstream behaviour (any AFR user with a dialog in its own task); a PR candidate
-  once proven on the TV (rule 2: exact build, evidence comment).
+- The sidebar label is "Full homepage" with the red X as its icon (an emoji in the label doubled the X and was cut off).
 
 ## Verified
-(to fill in from the batch 8 build on the stick)
+On the stick, 32.76-focus.50, 2026-11-16, TV on:
+- 11:31: "No, full SmartTube" landed on Home (Recommended rows); log "No: browse screen back on Home as chosen".
+- 11:47: distraction-free sidebar shows the red-X "Full homepage" just above Settings; opening it shows the full
+  YouTube Home (Recommended, Start a music mix). Kids mode doesn't get it (filterSections returns early for Kids).
+- No `FATAL EXCEPTION` across the runs.

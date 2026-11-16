@@ -14,7 +14,6 @@ import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.views.PlaybackView;
 import com.liskovsoft.smartyoutubetv2.common.app.views.ViewManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.FocusMode;
-import com.liskovsoft.smartyoutubetv2.common.misc.FocusPanels;
 import com.liskovsoft.smartyoutubetv2.common.misc.FocusTrace;
 import com.liskovsoft.smartyoutubetv2.common.misc.GlobalKeyTranslator;
 import com.liskovsoft.smartyoutubetv2.common.misc.PlayerKeyTranslator;
@@ -134,7 +133,6 @@ public class AppDialogActivity extends MotherActivity {
 
         // Destroy dialog when BACK is pressed. NoHistory isn't reliable if combined with singleInstance
         finishReally();
-        FocusPanels.skipCloseAnimation(this);
     }
 
     @Override

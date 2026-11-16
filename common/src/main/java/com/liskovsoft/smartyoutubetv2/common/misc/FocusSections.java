@@ -50,7 +50,7 @@ final class FocusSections {
         rows.put(TENNIS_ID, RxHelper.fromCallable(FocusSections::loadTennis));
         sections.put(CONTINUE_ID, new BrowseSection(CONTINUE_ID, "Continue watching", BrowseSection.TYPE_ROW, R.drawable.icon_continue, true));
         rows.put(CONTINUE_ID, RxHelper.fromCallable(FocusSections::loadContinue));
-        sections.put(FULL_HOME_ID, new BrowseSection(FULL_HOME_ID, "\u274C Full homepage", BrowseSection.TYPE_ROW, R.drawable.icon_full_home, false));
+        sections.put(FULL_HOME_ID, new BrowseSection(FULL_HOME_ID, "Full homepage", BrowseSection.TYPE_ROW, R.drawable.icon_full_home, false));
         rows.put(FULL_HOME_ID, FocusRows.content().getHomeObserve());
         FocusLog.d(TAG, "dewidebug Search, Tennis, Continue watching and Full homepage sections registered");
     }

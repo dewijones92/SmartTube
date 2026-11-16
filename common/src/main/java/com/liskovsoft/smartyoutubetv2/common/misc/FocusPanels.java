@@ -1,6 +1,5 @@
 package com.liskovsoft.smartyoutubetv2.common.misc;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
@@ -8,7 +7,6 @@ import android.os.SystemClock;
 import android.view.KeyEvent;
 
 import com.liskovsoft.smartyoutubetv2.common.R;
-import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.models.playback.manager.PlayerEngine;
 
 public final class FocusPanels {
@@ -56,20 +54,6 @@ public final class FocusPanels {
         FocusLog.d(TAG, "dewidebug panel %s: %s", event, describe(player));
         sHandler.removeCallbacks(sTick);
         sHandler.postDelayed(sTick, TICK_MS);
-    }
-
-    public static void skipCloseAnimation(Activity activity) {
-        if (activity == null || !FocusTrace.isEnabled(activity)) {
-            return;
-        }
-
-        if (!FocusSpeed.isStickyModeActive() || PlaybackPresenter.instance(activity).getView() == null) {
-            FocusLog.d(TAG, "dewidebug panel window closing with its normal animation: no player with a frame-rate mode underneath");
-            return;
-        }
-
-        activity.overridePendingTransition(0, 0);
-        FocusLog.d(TAG, "dewidebug panel window closing without an animation, so the player's frame-rate mode stays in charge");
     }
 
     public static void logMediaSessionRequest(Context context, boolean playWhenReady) {
